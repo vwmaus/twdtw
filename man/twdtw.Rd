@@ -27,7 +27,7 @@ Defaults to c(100, 1) (set weight to zero).}
 Defaults to symmetric1.}
 
 \item{twdtw_version}{A string identifying the version of twdtw implementation.
-Options are 'f77' for Fortran 77 and 'f90' for Fortran 90. Defaults to 'f77'.}
+Options are 'f77' for Fortran 77, 'f90' for Fortran 90, 'cpp' for C++. Defaults to 'f77'.}
 
 \item{index_column}{The column name of the time index. Defaults to "date".}
 
@@ -56,9 +56,10 @@ y <- data.frame(date = seq(as.Date("2020-01-05"), by = "day", length.out = n),
              value = sin(t)*2 + runif(n))
 
 rbenchmark::benchmark(
-f7=twdtw(x, y, tw = c(-0.1,50), all_matches = TRUE, twdtw_version = 'f77'),
-f9=twdtw(x, y, tw = c(-0.1,50), all_matches = TRUE, twdtw_version = 'f90'),
-fg=twdtw(x, y, tw = c(-0.1,50), all_matches = TRUE, twdtw_version = 'f90gt'),
+f77=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f77'),
+f99=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90'),
+fgt=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90gt'),
+cpp=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'cpp'),
 replications = 1000
 )
 

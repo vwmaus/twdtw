@@ -16,7 +16,7 @@
 #' @param all_matches Logical indicating whether to find all matches within the
 #'   TWDTW matrix. Defaults to FALSE.
 #' @param twdtw_version A string identifying the version of twdtw implementation.
-#' Options are 'f77' for Fortran 77 and 'f90' for Fortran 90. Defaults to 'f77'.
+#' Options are 'f77' for Fortran 77, 'f90' for Fortran 90, 'cpp' for C++. Defaults to 'f77'.
 #'
 #' @return A numeric value representing the TWDTW distance between the two time series.
 #'
@@ -32,9 +32,10 @@
 #'              value = sin(t)*2 + runif(n))
 #'
 #' rbenchmark::benchmark(
-#' f7=twdtw(x, y, tw = c(-0.1,50), all_matches = TRUE, twdtw_version = 'f77'),
-#' f9=twdtw(x, y, tw = c(-0.1,50), all_matches = TRUE, twdtw_version = 'f90'),
-#' fg=twdtw(x, y, tw = c(-0.1,50), all_matches = TRUE, twdtw_version = 'f90gt'),
+#' f77=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f77'),
+#' f99=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90'),
+#' fgt=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90gt'),
+#' cpp=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'cpp'),
 #' replications = 1000
 #' )
 #'
@@ -62,7 +63,10 @@ twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, twdtw_version 
   y <- y[, names(x), drop = FALSE]
 
   # Get the function version using its name
-  fn <- get(c('twdtw_r_f77', 'twdtw_r_f90', 'twdtw_r_f90gt')[twdtw_version == c('f77', 'f90', 'f90gt')])
+  fn <- get(c('twdtw_r_f77',
+              'twdtw_r_f90',
+              'twdtw_r_f90gt',
+              'twdtw_r_cpp')[twdtw_version == c('f77', 'f90', 'f90gt', 'cpp')])
 
   # Call the Fortran implementation of TWDTW
   internals <- fn(XM = as.matrix(x),
@@ -191,3 +195,30 @@ twdtw_r_f90 <- function(XM, YM, SM, TW, LB = TRUE) {
            PACKAGE = "twdtw")
 
 }
+
+twdtw_r_cpp <- function(XM, YM, SM, TW, LB = TRUE) {
+
+  # Get the dimensions of the matrices
+  N <- nrow(YM)
+  M <- nrow(XM)
+  D <- ncol(YM)
+  NS <- nrow(SM)
+
+  # Initialize the matrices with correct dimensions and types
+  CM <- matrix(0, N+1, M)
+  DM <- matrix(0, N+1, M)
+  VM <- matrix(0, N+1, M)
+  JB <- integer(M)
+
+  # Call the twdtw
+  .Call("twdtw_cpp", XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
+
+  list(XM = XM, YM = YM,
+       CM = CM, DM = DM,
+       VM = VM, SM = SM,
+       N = N, M = M, D = D,
+       NS = NS, TW = TW,
+       LB = LB, JB = JB)
+
+}
+
