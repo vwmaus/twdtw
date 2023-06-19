@@ -19,4 +19,5 @@ RoxygenNote: 7.2.3
 Imports:
     dtw
 Suggests:
-    readr
+    readr,
+    rbenchmark

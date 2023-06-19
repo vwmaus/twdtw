@@ -10,20 +10,22 @@
 ! B  - Time-Weight parameter beta
 
 
-real function distancen(YM, XM, N, M, D, I, J, TW, TD)
-  use, intrinsic :: ieee_arithmetic
+double precision function distance(YM, XM, N, M, D, I, J, TW, TD)
   implicit none
   integer, intent(in) :: N, M, D, I, J
-  double precision, dimension(:,:), intent(in) :: XM, YM
-  double precision, dimension(2), intent(in) :: TW
-  double precision, intent(in) :: TD
+  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), TD
   double precision :: BD, CD
   integer :: K
-  distancen = ieee_value(0.0, ieee_quiet_nan)
+  double precision :: dist
+
   CD = 0.0
   do K = 2, D
      BD = YM(I,K) - XM(J,K)
      CD = CD + (BD * BD)
   end do
-  distancen = sqrt(CD) + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
-end function distancen
+
+  dist = sqrt(CD)
+  dist = dist + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
+
+  distance = dist
+end function distance

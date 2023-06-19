@@ -18,6 +18,7 @@ C     I/O Variables
       DOUBLE PRECISION XM(M,D), YM(N,D), CM(N+1,M), TW(2)
       LOGICAL LB
 C     Internals
+      DOUBLE PRECISION ellapsed, distance
       DOUBLE PRECISION W, CP(NS), VMIN, A, B, TD
       INTEGER I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO, ONE, JM
       PARAMETER(ZERO=0,ONE=1)
@@ -30,28 +31,15 @@ C     Internals
 
 C     Initialize the firt row and col of the matrices
       DO 21 I = 2, N+1
-         TD = YM(I-1,1) - XM(1,1)
-         CALL ellapsed(TD)
-C         IF (TD.GT.TW(2)) THEN
-C           CM(I,1) = INF
-C         ELSE
-           CM(I,1) = CM(I-1,1) +
-     &               distance(YM, XM, N, M, D, I-1, 1, TW, TD)
-C         ENDIF
-C         WRITE (*,*) 'The distance ',I,',1 is ', CM(I,1)
+         TD = ellapsed(YM(I-1,1) - XM(1,1))
+         CM(I,1) = CM(I-1,1) + distance(YM, XM, N, M, D, I-1, 1, TW, TD)
          DM(I,1) = 3
          VM(I,1) = 1
    21 CONTINUE
       DO 31 J = 2, M
-         TD = YM(2,1) - XM(J,1)
-         CALL ellapsed(TD)
-C         IF (TD.GT.TW(2)) THEN
-C           CM(2,J) = INF
-C         ELSE
+         TD = ellapsed(YM(2,1) - XM(J,1))
            CM(2,J) = CM(2,J-1) +
      &               distance(YM, XM, N, M, D, 1, J, TW, TD)
-C         ENDIF
-C         WRITE (*,*) 'The distance 2,',J,' is ', CM(2,J)
          DM(1,J) = 2
          VM(1,J) = J
    31 CONTINUE
@@ -63,8 +51,7 @@ C     Compute cumulative cost matrix
 C         PRINT *, "J: ", J, "I: ", I
 C           Calculate local distance
 C           # the call takes I-1 because local matrix has an additional row at the begning
-            TD = YM(I-1,1) - XM(J,1)
-            CALL ellapsed(TD)
+            TD = ellapsed(YM(I-1,1) - XM(J,1))
             IF (LB.AND.(TD.GT.TW(2))) THEN
 C              print *, "I: ", I, "TD: ", TD, " -- TW: ", TW(2)
               CM(I,J) = INF

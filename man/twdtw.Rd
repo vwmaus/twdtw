@@ -9,6 +9,7 @@ twdtw(
   y,
   tw = c(100, 1),
   step_matrix = symmetric1,
+  twdtw_version = "f77",
   index_column = "date",
   lower_band = TRUE,
   all_matches = FALSE
@@ -24,6 +25,9 @@ Defaults to c(100, 1) (set weight to zero).}
 
 \item{step_matrix}{A matrix specifying the step pattern for the TWDTW algorithm.
 Defaults to symmetric1.}
+
+\item{twdtw_version}{A string identifying the version of twdtw implementation.
+Options are 'f77' for Fortran 77 and 'f90' for Fortran 90. Defaults to 'f77'.}
 
 \item{index_column}{The column name of the time index. Defaults to "date".}
 
@@ -51,6 +55,11 @@ x <- data.frame(date = seq(as.Date("2020-01-01"), by = "day", length.out = n),
 y <- data.frame(date = seq(as.Date("2020-01-05"), by = "day", length.out = n),
              value = sin(t)*2 + runif(n))
 
-twdtw(x, y)
+rbenchmark::benchmark(
+f7=twdtw(x, y, tw = c(-0.1,50), all_matches = TRUE, twdtw_version = 'f77'),
+f9=twdtw(x, y, tw = c(-0.1,50), all_matches = TRUE, twdtw_version = 'f90'),
+fg=twdtw(x, y, tw = c(-0.1,50), all_matches = TRUE, twdtw_version = 'f90gt'),
+replications = 1000
+)
 
 }

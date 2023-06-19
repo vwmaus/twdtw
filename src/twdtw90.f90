@@ -16,7 +16,7 @@ subroutine twdtw90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   ! I/O Variables
   use, intrinsic :: ieee_arithmetic
   implicit none
-  double precision :: distance
+  double precision :: ellapsed, distance
   integer, intent(in) :: N, M, D, NS
   integer, intent(in) :: SM(NS,4)
   integer, intent(out) :: DM(N+1,M), VM(N+1,M), JB(N)
@@ -34,16 +34,14 @@ subroutine twdtw90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
 
   ! Initialize the first row and col of the matrices
   do I = 2, N+1
-    TD = YM(I-1,1) - XM(1,1)
-    call ellapsed(TD)
+    TD = ellapsed(YM(I-1,1) - XM(1,1))
     CM(I,1) = CM(I-1,1) + distance(YM, XM, N, M, D, I-1, 1, TW, TD)
     DM(I,1) = 3
     VM(I,1) = 1
   end do
 
   do J = 2, M
-    TD = YM(2,1) - XM(J,1)
-    call ellapsed(TD)
+    TD = ellapsed(YM(2,1) - XM(J,1))
     CM(2,J) = CM(2,J-1) + distance(YM, XM, N, M, D, 1, J, TW, TD)
     DM(1,J) = 2
     VM(1,J) = J
@@ -56,8 +54,7 @@ subroutine twdtw90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
     do while ( I .le. N+1 )
       ! Calculate local distance
       ! the call takes I-1 because local matrix has an additional row at the beginning
-      TD = YM(I-1,1) - XM(J,1)
-      call ellapsed(TD)
+      TD = ellapsed(YM(I-1,1) - XM(J,1))
       if (LB.and.(TD.gt.TW(2))) then
         CM(I,J) = INF
         DM(I,J) = -ONE

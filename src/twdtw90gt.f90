@@ -14,11 +14,12 @@
 subroutine twdtw90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   use, intrinsic :: ieee_arithmetic
   implicit none
+  double precision :: ellapsed, distance
   integer, intent(in) :: N, M, D, NS
   integer :: SM(NS,4), DM(N+1,M), VM(N+1,M), JB(N)
   double precision, intent(in) :: XM(M,D), YM(N,D), TW(2)
   logical, intent(in) :: LB
-  double precision :: CM(N+1,M), W, CP(NS), VMIN, A, B, TD, distance
+  double precision :: CM(N+1,M), W, CP(NS), VMIN, A, B, TD
   integer :: I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO, ONE, JM, ILMIN, JLMIN, IML
   parameter(ZERO=0, ONE=1)
   double precision :: NAN, INF
@@ -29,16 +30,14 @@ subroutine twdtw90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
 
   ! Initialize the first row and column of the matrices
   do 21 I = 2, N+1
-     TD = YM(I-1,1) - XM(1,1)
-     call ellapsed(TD)
+     TD = ellapsed(YM(I-1,1) - XM(1,1))
      CM(I,1) = CM(I-1,1) + distance(YM, XM, N, M, D, I-1, 1, TW, TD)
      DM(I,1) = 3
      VM(I,1) = 1
 21 continue
 
   do 31 J = 2, M
-     TD = YM(2,1) - XM(J,1)
-     call ellapsed(TD)
+     TD = ellapsed(YM(2,1) - XM(J,1))
      CM(2,J) = CM(2,J-1) + distance(YM, XM, N, M, D, 1, J, TW, TD)
      DM(1,J) = 2
      VM(1,J) = J
@@ -49,8 +48,7 @@ subroutine twdtw90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   do 32 while (J .le. M)
      I = 2
      do 22 while (I .le. N+1)
-        TD = YM(I-1,1) - XM(J,1)
-        call ellapsed(TD)
+        TD = ellapsed(YM(I-1,1) - XM(J,1))
         if (LB .and. (TD > TW(2))) then
            CM(I,J) = INF
            DM(I,J) = -ONE
