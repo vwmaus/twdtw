@@ -12,7 +12,7 @@
 ! NS - Number of rows in SM
 ! TW - Time-Weight parameters alpha and beta
 ! LB - Constrain TWDTW calculation to band given by TW(2)
-subroutine twdtw90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
+subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   ! I/O Variables
   use, intrinsic :: ieee_arithmetic
   implicit none
@@ -115,4 +115,4 @@ subroutine twdtw90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
     end if
     J = J + 1
   end do
-end subroutine twdtw90
+end subroutine twdtwf90

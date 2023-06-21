@@ -1,4 +1,5 @@
 #' @useDynLib twdtw, .registration = TRUE
+#' @import Rcpp
 NULL
 
 #' @importFrom dtw symmetric1

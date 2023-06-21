@@ -56,11 +56,10 @@ y <- data.frame(date = seq(as.Date("2020-01-05"), by = "day", length.out = n),
              value = sin(t)*2 + runif(n))
 
 rbenchmark::benchmark(
-f77=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f77'),
-f99=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90'),
+f90=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90'),
 fgt=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90gt'),
 cpp=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'cpp'),
-replications = 1000
+replications = 100
 )
 
 }

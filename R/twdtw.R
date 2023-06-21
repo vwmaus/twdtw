@@ -32,11 +32,10 @@
 #'              value = sin(t)*2 + runif(n))
 #'
 #' rbenchmark::benchmark(
-#' f77=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f77'),
-#' f99=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90'),
+#' f90=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90'),
 #' fgt=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90gt'),
 #' cpp=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'cpp'),
-#' replications = 1000
+#' replications = 10000
 #' )
 #'
 #' @export
@@ -50,10 +49,10 @@ twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, twdtw_version 
 
   # Convert dates to numeric
   if(inherits(x[,index_column], "Date")){
-    x[,index_column] <- format(x[,index_column], "%j")
+    x[,index_column] <- as.numeric(format(x[,index_column], "%j"))
   }
   if(inherits(y[,index_column], "Date")){
-    y[,index_column] <- format(y[,index_column], "%j")
+    y[,index_column] <- as.numeric(format(y[,index_column], "%j"))
   }
 
   # Position time index at the first column
@@ -62,24 +61,32 @@ twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, twdtw_version 
   # Sort dimensions of y according to x
   y <- y[, names(x), drop = FALSE]
 
+  # Initialize data with correct dimensions and types
+  N <- as.integer(nrow(y))
+  M <- as.integer(nrow(x))
+  D <- as.integer(ncol(y))
+  XM <- matrix(as.double(as.matrix(x)), N, D)
+  YM <- matrix(as.double(as.matrix(y)), N, D)
+  CM <- matrix(0, nrow = N+1, ncol = M)
+  DM <- matrix(0L, nrow = N+1, ncol = M)
+  VM <- matrix(0L, nrow = N+1, ncol = M)
+  JB <- as.integer(rep(0, N))
+  SM <- matrix(as.integer(step_matrix), nrow(step_matrix), ncol(step_matrix))
+  NS <- as.integer(nrow(SM))
+  TW = as.double(tw)
+  LB = as.logical(lower_band)
+
   # Get the function version using its name
-  fn <- get(c('twdtw_r_f77',
-              'twdtw_r_f90',
-              'twdtw_r_f90gt',
-              'twdtw_r_cpp')[twdtw_version == c('f77', 'f90', 'f90gt', 'cpp')])
+  fn <- get(c('twdtw_f90',
+              'twdtw_f90gt',
+              'twdtw_cpp')[twdtw_version == c('f90', 'f90gt', 'cpp')])
 
-  # Call the Fortran implementation of TWDTW
-  internals <- fn(XM = as.matrix(x),
-                  YM = as.matrix(y),
-                  SM = matrix(as.integer(step_matrix), nrow(step_matrix), ncol(step_matrix)),
-                  TW = tw,
-                  LB = lower_band)
+  # Call twdtw
+  fn(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
 
-  b <- internals$JB[internals$JB!=0]
-  a <- internals$VM[-1,][internals$N,b]
-  d <- internals$CM[-1,][internals$N,b]
-  # A <- internals$CM[-1,]
-  # A[A>100] <- NA
+  b <- JB[JB!=0]
+  a <- VM[-1,][N,b]
+  d <- CM[-1,][N,b]
   candidates <- matrix(c(a, b, d), ncol = 3, byrow = F)
 
   if (all_matches) {
@@ -88,137 +95,5 @@ twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, twdtw_version 
 
   candidates
 
-  return(internals)
+  return(candidates)
 }
-
-
-
-twdtw_r_f77 <- function(XM, YM, SM, TW, LB = TRUE) {
-
-  # Get the dimensions of the matrices
-  N <- nrow(YM)
-  M <- nrow(XM)
-  D <- ncol(YM)
-  NS <- nrow(SM)
-
-  # Initialize the matrices with correct dimensions and types
-  CM <- matrix(0, nrow = N+1, ncol = M)
-  DM <- matrix(0L, nrow = N+1, ncol = M)
-  VM <- matrix(0L, nrow = N+1, ncol = M)
-  JB <- as.integer(rep(0, N))
-  SM <- matrix(as.integer(SM), nrow(SM), ncol(SM))
-
-  # Call the twdtw
-  .Fortran("twdtw_f77",
-           XM = matrix(as.double(XM), M, D),
-           YM = matrix(as.double(YM), N, D),
-           CM = matrix(as.double(CM), N+1, M),
-           DM = matrix(as.integer(DM), N+1, M),
-           VM = matrix(as.integer(VM), N+1, M),
-           SM = matrix(as.integer(SM), NS, 4),
-           N = as.integer(N),
-           M = as.integer(M),
-           D = as.integer(D),
-           NS = as.integer(NS),
-           TW = as.double(TW),
-           LB = as.logical(LB),
-           JB = as.integer(JB),
-           PACKAGE = "twdtw")
-
-}
-
-twdtw_r_f90gt <- function(XM, YM, SM, TW, LB = TRUE) {
-
-  # Get the dimensions of the matrices
-  N <- nrow(YM)
-  M <- nrow(XM)
-  D <- ncol(YM)
-  NS <- nrow(SM)
-
-  # Initialize the matrices with correct dimensions and types
-  CM <- matrix(0, nrow = N+1, ncol = M)
-  DM <- matrix(0L, nrow = N+1, ncol = M)
-  VM <- matrix(0L, nrow = N+1, ncol = M)
-  JB <- as.integer(rep(0, N))
-  SM <- matrix(as.integer(SM), nrow(SM), ncol(SM))
-
-  # Call the twdtw
-  .Fortran("twdtw_f90gt",
-           XM = matrix(as.double(XM), M, D),
-           YM = matrix(as.double(YM), N, D),
-           CM = matrix(as.double(CM), N+1, M),
-           DM = matrix(as.integer(DM), N+1, M),
-           VM = matrix(as.integer(VM), N+1, M),
-           SM = matrix(as.integer(SM), NS, 4),
-           N = as.integer(N),
-           M = as.integer(M),
-           D = as.integer(D),
-           NS = as.integer(NS),
-           TW = as.double(TW),
-           LB = as.logical(LB),
-           JB = as.integer(JB),
-           PACKAGE = "twdtw")
-
-}
-
-
-twdtw_r_f90 <- function(XM, YM, SM, TW, LB = TRUE) {
-
-  # Get the dimensions of the matrices
-  N <- nrow(YM)
-  M <- nrow(XM)
-  D <- ncol(YM)
-  NS <- nrow(SM)
-
-  # Initialize the matrices with correct dimensions and types
-  CM <- matrix(0, nrow = N+1, ncol = M)
-  DM <- matrix(0L, nrow = N+1, ncol = M)
-  VM <- matrix(0L, nrow = N+1, ncol = M)
-  JB <- as.integer(rep(0, N))
-  SM <- matrix(as.integer(SM), nrow(SM), ncol(SM))
-
-  # Call the twdtw
-  .Fortran("twdtw_f90",
-           XM = matrix(as.double(XM), M, D),
-           YM = matrix(as.double(YM), N, D),
-           CM = matrix(as.double(CM), N+1, M),
-           DM = matrix(as.integer(DM), N+1, M),
-           VM = matrix(as.integer(VM), N+1, M),
-           SM = matrix(as.integer(SM), NS, 4),
-           N = as.integer(N),
-           M = as.integer(M),
-           D = as.integer(D),
-           NS = as.integer(NS),
-           TW = as.double(TW),
-           LB = as.logical(LB),
-           JB = as.integer(JB),
-           PACKAGE = "twdtw")
-
-}
-
-twdtw_r_cpp <- function(XM, YM, SM, TW, LB = TRUE) {
-
-  # Get the dimensions of the matrices
-  N <- nrow(YM)
-  M <- nrow(XM)
-  D <- ncol(YM)
-  NS <- nrow(SM)
-
-  # Initialize the matrices with correct dimensions and types
-  CM <- matrix(0, N+1, M)
-  DM <- matrix(0, N+1, M)
-  VM <- matrix(0, N+1, M)
-  JB <- integer(M)
-
-  # Call the twdtw
-  .Call("twdtw_cpp", XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
-
-  list(XM = XM, YM = YM,
-       CM = CM, DM = DM,
-       VM = VM, SM = SM,
-       N = N, M = M, D = D,
-       NS = NS, TW = TW,
-       LB = LB, JB = JB)
-
-}
-
