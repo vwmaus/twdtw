@@ -15,8 +15,15 @@
 #'   to the lower band given by the time-weight parameter beta. Defaults to TRUE.
 #' @param all_matches Logical indicating whether to find all matches within the
 #'   TWDTW matrix. Defaults to FALSE.
-#' @param twdtw_version A string identifying the version of twdtw implementation.
-#' Options are 'f77' for Fortran 77, 'f90' for Fortran 90, 'cpp' for C++. Defaults to 'f77'.
+#' @param version A string identifying the version of twdtw implementation.
+#' Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements,
+#' or 'cpp' for C++ version. Defaults to 'f90'. See details.
+#'
+#' @details
+#' The Fortran 90 versions of twdtw typically outperform the C++ version.
+#' Additionally, the '`f90goto`' version, which utilizes `goto` statements,
+#' tends to be slightly faster than the '`f90`' version that only uses
+#' while and for loops.
 #'
 #' @return A numeric value representing the TWDTW distance between the two time series.
 #'
@@ -31,15 +38,15 @@
 #' y <- data.frame(date = seq(as.Date("2020-01-05"), by = "day", length.out = n),
 #'              value = sin(t)*2 + runif(n))
 #'
-#' rbenchmark::benchmark(
-#' f90=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90'),
-#' fgt=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90gt'),
-#' cpp=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'cpp'),
-#' replications = 10000
-#' )
+#' plot(x, type = "l")
+#' lines(y, col = "red")
+#'
+#' # Calculate TWDTW distance between x and y
+#' twdtw(x, y, tw = c(-.1, 50))
+#'
 #'
 #' @export
-twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, twdtw_version = 'f77',
+twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, version = 'f90',
                   index_column = 'date', lower_band = TRUE, all_matches = FALSE) {
 
   # The dimensions of the time series must match
@@ -79,7 +86,7 @@ twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, twdtw_version 
   # Get the function version using its name
   fn <- get(c('twdtw_f90',
               'twdtw_f90gt',
-              'twdtw_cpp')[twdtw_version == c('f90', 'f90gt', 'cpp')])
+              'twdtw_cpp')[version == c('f90', 'f90goto', 'cpp')])
 
   # Call twdtw
   fn(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
@@ -93,7 +100,6 @@ twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, twdtw_version 
     return(candidates)
   }
 
-  candidates
+  return(min(d))
 
-  return(candidates)
 }

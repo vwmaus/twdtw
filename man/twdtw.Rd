@@ -9,7 +9,7 @@ twdtw(
   y,
   tw = c(100, 1),
   step_matrix = symmetric1,
-  twdtw_version = "f77",
+  version = "f90",
   index_column = "date",
   lower_band = TRUE,
   all_matches = FALSE
@@ -26,8 +26,9 @@ Defaults to c(100, 1) (set weight to zero).}
 \item{step_matrix}{A matrix specifying the step pattern for the TWDTW algorithm.
 Defaults to symmetric1.}
 
-\item{twdtw_version}{A string identifying the version of twdtw implementation.
-Options are 'f77' for Fortran 77, 'f90' for Fortran 90, 'cpp' for C++. Defaults to 'f77'.}
+\item{version}{A string identifying the version of twdtw implementation.
+Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements,
+or 'cpp' for C++ version. Defaults to 'f90'. See details.}
 
 \item{index_column}{The column name of the time index. Defaults to "date".}
 
@@ -44,6 +45,12 @@ A numeric value representing the TWDTW distance between the two time series.
 This function calculates the Time-Weighted Dynamic Time Warping (TWDTW) distance
 between two time series.
 }
+\details{
+The Fortran 90 versions of twdtw typically outperform the C++ version.
+Additionally, the '\code{f90goto}' version, which utilizes \code{goto} statements,
+tends to be slightly faster than the '\code{f90}' version that only uses
+while and for loops.
+}
 \examples{
 
 n <- 20
@@ -55,11 +62,11 @@ x <- data.frame(date = seq(as.Date("2020-01-01"), by = "day", length.out = n),
 y <- data.frame(date = seq(as.Date("2020-01-05"), by = "day", length.out = n),
              value = sin(t)*2 + runif(n))
 
-rbenchmark::benchmark(
-f90=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90'),
-fgt=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'f90gt'),
-cpp=twdtw(x, y, tw = c(-.1,50), all_matches = TRUE, twdtw_version = 'cpp'),
-replications = 100
-)
+plot(x, type = "l")
+lines(y, col = "red")
+
+# Calculate TWDTW distance between x and y
+twdtw(x, y, tw = c(-.1, 50))
+
 
 }
