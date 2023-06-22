@@ -12,7 +12,8 @@ twdtw(
   version = "f90",
   index_column = "date",
   lower_band = TRUE,
-  all_matches = FALSE
+  all_matches = FALSE,
+  ...
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ to the lower band given by the time-weight parameter beta. Defaults to TRUE.}
 
 \item{all_matches}{Logical indicating whether to find all matches within the
 TWDTW matrix. Defaults to FALSE.}
+
+\item{...}{other par}
 }
 \value{
 A numeric value representing the TWDTW distance between the two time series.
@@ -66,7 +69,9 @@ plot(x, type = "l")
 lines(y, col = "red")
 
 # Calculate TWDTW distance between x and y
-twdtw(x, y, tw = c(-.1, 50))
+twdtw(x, y, tw = c(-.1, 50),
+  tw_r = function(dist,td) dist + 1.0 / (1.0 + exp(-0.1 * (td - 50))))
 
+twdtw(x, y, tw = c(-.1, 50), version = 'f90goto')
 
 }

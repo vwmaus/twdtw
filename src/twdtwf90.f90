@@ -10,30 +10,25 @@
 ! B  - Time-Weight parameter beta
 
 
-double precision function distance(YM, XM, N, M, D, I, J, TW, TD)
+double precision function distance(YM, XM, N, M, D, I, J)
   implicit none
   integer, intent(in) :: N, M, D, I, J
-  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), TD
-  double precision :: BD, CD
+  double precision, intent(in) :: XM(M,D), YM(N,D)
+  double precision :: BD, DIST
   integer :: K
-  double precision :: dist
 
-  CD = 0.0
+  DIST = 0.0
   do K = 2, D
      BD = YM(I,K) - XM(J,K)
-     CD = CD + (BD * BD)
+     DIST = DIST + (BD * BD)
   end do
 
-  dist = sqrt(CD)
-  dist = dist + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
-
-  distance = dist
+  distance = sqrt(DIST)
 end function distance
 
 
 ! Computation ellapsed time in days
 ! TD - time difference in days
-
 double precision function ellapsed(X)
   implicit none
   double precision, intent(in) :: X
@@ -48,8 +43,8 @@ double precision function ellapsed(X)
 end function ellapsed
 
 
-! Computation of TWDTW cost matrix
 
+! Computation of TWDTW cost matrix
 ! XM - matrix with the time series (N,D)
 ! YM - matrix with the temporal profile (M,D)
 ! CM - Output cumulative cost matrix
@@ -62,19 +57,28 @@ end function ellapsed
 ! NS - Number of rows in SM
 ! TW - Time-Weight parameters alpha and beta
 ! LB - Constrain TWDTW calculation to band given by TW(2)
-subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
-  ! I/O Variables
+subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_func) bind(C, name = "twdtwf90")
   use, intrinsic :: ieee_arithmetic
+  use iso_c_binding
   implicit none
+  interface
+    function callback_func(x, y) result(result_val) bind(C)
+      use iso_c_binding
+      real(c_double), intent(in) :: x, y
+      real(c_double) :: result_val
+    end function callback_func
+  end interface
+
+  ! I/O Variables
   double precision :: ellapsed, distance
   integer, intent(in) :: N, M, D, NS
   integer, intent(in) :: SM(NS,4)
   integer, intent(out) :: DM(N+1,M), VM(N+1,M), JB(N)
   double precision, intent(in) :: XM(M,D), YM(N,D), TW(2)
   double precision, intent(out) :: CM(N+1,M)
-  logical, intent(in) :: LB
+  logical(c_bool), intent(in) :: LB
   ! Internals
-  double precision :: W, CP(NS), VMIN, A, B, TD
+  double precision :: W, CP(NS), VMIN, A, B, TD, DIST
   integer :: I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO=0, ONE=1, JM, JLMIN, ILMIN
   double precision :: NAN, INF
   NAN = ieee_value(0.0, ieee_quiet_nan)
@@ -85,14 +89,18 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   ! Initialize the first row and col of the matrices
   do I = 2, N+1
     TD = ellapsed(YM(I-1,1) - XM(1,1))
-    CM(I,1) = CM(I-1,1) + distance(YM, XM, N, M, D, I-1, 1, TW, TD)
+    DIST = distance(YM, XM, N, M, D, I-1, 1)
+    CM(I,1) = CM(I-1,1) + callback_func(DIST, TD)
+    ! (DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2)))))
     DM(I,1) = 3
     VM(I,1) = 1
   end do
 
   do J = 2, M
     TD = ellapsed(YM(2,1) - XM(J,1))
-    CM(2,J) = CM(2,J-1) + distance(YM, XM, N, M, D, 1, J, TW, TD)
+    DIST = distance(YM, XM, N, M, D, 1, J)
+    CM(2,J) = CM(2,J-1) + callback_func(DIST, TD)
+    ! (DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2)))))
     DM(1,J) = 2
     VM(1,J) = J
   end do
@@ -110,7 +118,9 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
         DM(I,J) = -ONE
         VM(I,J) = ZERO
       else
-        CM(I,J) = distance(YM, XM, N, M, D, I-1, J, TW, TD)
+        DIST = distance(YM, XM, N, M, D, I-1, J)
+        CM(I,J) = callback_func(DIST, TD)
+        ! DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
       end if
       ! Initialize list of step cost
       CP(:) = NAN
@@ -189,7 +199,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   integer :: SM(NS,4), DM(N+1,M), VM(N+1,M), JB(N)
   double precision, intent(in) :: XM(M,D), YM(N,D), TW(2)
   logical, intent(in) :: LB
-  double precision :: CM(N+1,M), W, CP(NS), VMIN, A, B, TD
+  double precision :: CM(N+1,M), W, CP(NS), VMIN, A, B, TD, DIST
   integer :: I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO, ONE, JM, ILMIN, JLMIN, IML
   parameter(ZERO=0, ONE=1)
   double precision :: NAN, INF
@@ -201,14 +211,16 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   ! Initialize the first row and column of the matrices
   do 21 I = 2, N+1
      TD = ellapsed(YM(I-1,1) - XM(1,1))
-     CM(I,1) = CM(I-1,1) + distance(YM, XM, N, M, D, I-1, 1, TW, TD)
+     DIST = distance(YM, XM, N, M, D, I-1, 1)
+     CM(I,1) = CM(I-1,1) + (DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2)))))
      DM(I,1) = 3
      VM(I,1) = 1
 21 continue
 
   do 31 J = 2, M
      TD = ellapsed(YM(2,1) - XM(J,1))
-     CM(2,J) = CM(2,J-1) + distance(YM, XM, N, M, D, 1, J, TW, TD)
+     DIST = distance(YM, XM, N, M, D, 1, J)
+     CM(2,J) = CM(2,J-1) + (DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2)))))
      DM(1,J) = 2
      VM(1,J) = J
 31 continue
@@ -225,7 +237,8 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
            VM(I,J) = ZERO
            goto 44
         else
-           CM(I,J) = distance(YM, XM, N, M, D, I-1, J, TW, TD)
+           DIST = distance(YM, XM, N, M, D, I-1, J)
+           CM(I,J) = DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
         endif
 
         ! Initialize list of step cost

@@ -18,6 +18,7 @@
 #' @param version A string identifying the version of twdtw implementation.
 #' Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements,
 #' or 'cpp' for C++ version. Defaults to 'f90'. See details.
+#' @param ... other par
 #'
 #' @details
 #' The Fortran 90 versions of twdtw typically outperform the C++ version.
@@ -42,12 +43,14 @@
 #' lines(y, col = "red")
 #'
 #' # Calculate TWDTW distance between x and y
-#' twdtw(x, y, tw = c(-.1, 50))
+#' twdtw(x, y, tw = c(-.1, 50),
+#'   tw_r = function(dist,td) dist + 1.0 / (1.0 + exp(-0.1 * (td - 50))))
 #'
+#' twdtw(x, y, tw = c(-.1, 50), version = 'f90goto')
 #'
 #' @export
 twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, version = 'f90',
-                  index_column = 'date', lower_band = TRUE, all_matches = FALSE) {
+                  index_column = 'date', lower_band = TRUE, all_matches = FALSE, ...) {
 
   # The dimensions of the time series must match
   if (!setequal(names(y), names(x))) {
@@ -89,7 +92,7 @@ twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, version = 'f90
               'twdtw_cpp')[version == c('f90', 'f90goto', 'cpp')])
 
   # Call twdtw
-  fn(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
+  fn(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, ...)
 
   b <- JB[JB!=0]
   a <- VM[-1,][N,b]
