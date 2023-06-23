@@ -69,7 +69,7 @@ end function ellapsed
 ! D  - Number of spectral dimensions including time in XM and YM
 ! NS - Number of rows in SM
 ! TW - Time-Weight parameters alpha and beta
-! LB - Constrain TWDTW calculation to band given by TW(2)
+! LB - Constrain TWDTW calculation to band given a maximum elapsed time
 subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_func) bind(C, name = "twdtwf90")
   use, intrinsic :: ieee_arithmetic
   use iso_c_binding
@@ -88,9 +88,8 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
   integer, intent(in) :: N, M, D, NS
   integer, intent(in) :: SM(NS,4)
   integer, intent(out) :: DM(N+1,M), VM(N+1,M), JB(N)
-  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2)
+  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB
   double precision, intent(out) :: CM(N+1,M)
-  logical(c_bool), intent(in) :: LB
   ! Internals
   double precision :: W, CP(NS), VMIN, A, B, TD, DIST
   integer :: I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO=0, ONE=1, JM, JLMIN, ILMIN
@@ -127,7 +126,7 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
       ! Calculate local distance
       ! the call takes I-1 because local matrix has an additional row at the beginning
       TD = ellapsed(YM(I-1,1) - XM(J,1))
-      if (LB.and.(TD.gt.TW(2))) then
+      if (TD.gt.LB) then
         CM(I,J) = INF
         DM(I,J) = -ONE
         VM(I,J) = ZERO
@@ -204,15 +203,14 @@ end subroutine twdtwf90
 ! D  - Number of spectral dimensions including time in XM and YM
 ! NS - Number of rows in SM
 ! TW - Time-Weight parameters alpha and beta
-! LB - Constrain TWDTW calculation to band given by TW(2)
+! LB - Constrain TWDTW calculation to band given by a maximum elapsed time
 subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   use, intrinsic :: ieee_arithmetic
   implicit none
   double precision :: ellapsed, distance, logistic_tw2
   integer, intent(in) :: N, M, D, NS
   integer :: SM(NS,4), DM(N+1,M), VM(N+1,M), JB(N)
-  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2)
-  logical, intent(in) :: LB
+  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB
   double precision :: CM(N+1,M), W, CP(NS), VMIN, A, B, TD, DIST
   integer :: I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO, ONE, JM, ILMIN, JLMIN, IML
   parameter(ZERO=0, ONE=1)
@@ -245,7 +243,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
      I = 2
      do 22 while (I .le. N+1)
         TD = ellapsed(YM(I-1,1) - XM(J,1))
-        if (LB .and. (TD > TW(2))) then
+        if (TD.gt.LB) then
            CM(I,J) = INF
            DM(I,J) = -ONE
            VM(I,J) = ZERO

@@ -8,10 +8,10 @@ extern "C" {
   double logistic_tw(double* DIST, double* TD, double* TW1, double* TW2);
 
   void twdtwf90gt_(double* XM, double* YM, double* CM, int* DM, int* VM, int* SM,
-                   int* N, int* M, int* D, int* NS, double* TW, bool* LB, int* JB);
+                   int* N, int* M, int* D, int* NS, double* TW, double* LB, int* JB);
 
   void twdtwf90(double* XM, double* YM, double* CM, int* DM, int* VM, int* SM,
-                int* N, int* M, int* D, int* NS, double* TW, bool* LB, int* JB,
+                int* N, int* M, int* D, int* NS, double* TW, double* LB, int* JB,
                 double (*callback_func)(double*, double*, double*, double*));
 }
 
@@ -44,7 +44,7 @@ extern "C" double callback_bridge(double* x, double* y, double* z, double* w) {
 // [[Rcpp::export]]
 void twdtw_f90gt(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatrix DM,
                  IntegerMatrix VM, IntegerMatrix SM, int N, int M, int D, int NS,
-                 NumericVector TW, bool LB, IntegerVector JB) {
+                 NumericVector TW, double LB, IntegerVector JB) {
   twdtwf90gt_(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(), SM.begin(),
               &N, &M, &D, &NS, TW.begin(), &LB, JB.begin());
 }
@@ -52,7 +52,7 @@ void twdtw_f90gt(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMa
 // [[Rcpp::export]]
 void twdtw_f90(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatrix DM,
                IntegerMatrix VM, IntegerMatrix SM, int N, int M, int D, int NS,
-               NumericVector TW, bool LB, IntegerVector JB, Rcpp::Nullable<Rcpp::Function> tw_r = R_NilValue) {
+               NumericVector TW, double LB, IntegerVector JB, Rcpp::Nullable<Rcpp::Function> tw_r = R_NilValue) {
 
   // Check if the R function is null or not
   bool is_tw_r_null = tw_r.isNull();

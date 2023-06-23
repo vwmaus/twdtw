@@ -11,8 +11,8 @@
 #' @param step_matrix A matrix specifying the step pattern for the TWDTW algorithm.
 #'   Defaults to symmetric1.
 #' @param index_column The column name of the time index. Defaults to "date".
-#' @param lower_band Logical indicating whether to constrain the TWDTW calculation
-#'   to the lower band given by the time-weight parameter beta. Defaults to TRUE.
+#' @param max_elapsed Numeric constraining the TWDTW calculation to the lower band
+#' given by the a maximum elapsed time. Defaults to Inf.
 #' @param all_matches Logical indicating whether to find all matches within the
 #'   TWDTW matrix. Defaults to FALSE.
 #' @param version A string identifying the version of twdtw implementation.
@@ -43,16 +43,16 @@
 #' lines(y, col = "red")
 #'
 #' # Calculate TWDTW distance between x and y
-#' twdtw(x, y, tw = c(-.1, 50),
+#' twdtw(x, y, max_elapsed = 20,
 #'   tw_r = function(dist,td,tw1,tw2) dist + 1.0 / (1.0 + exp(-0.1 * (td - 50))))
 #'
-#' twdtw(x, y, tw = c(-.1, 50), version = 'f90goto')
+#' twdtw(x, y, tw = c(-.1, 50), max_elapsed = 50, version = 'f90goto')
 #'
-#' twdtw(x, y, tw = c(-.1, 50), version = 'cpp')
+#' twdtw(x, y, tw = c(-.1, 50), max_elapsed = 50, version = 'cpp')
 #'
 #' @export
 twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, version = 'f90',
-                  index_column = 'date', lower_band = TRUE, all_matches = FALSE, ...) {
+                  index_column = 'date', max_elapsed = Inf, all_matches = FALSE, ...) {
 
   # The dimensions of the time series must match
   if (!setequal(names(y), names(x))) {
@@ -86,7 +86,7 @@ twdtw <- function(x, y, tw = c(100, 1), step_matrix = symmetric1, version = 'f90
   SM <- matrix(as.integer(step_matrix), nrow(step_matrix), ncol(step_matrix))
   NS <- as.integer(nrow(SM))
   TW = as.double(tw)
-  LB = as.logical(lower_band)
+  LB = as.double(max_elapsed)
 
   # Get the function version using its name
   fn <- get(c('twdtw_f90',
