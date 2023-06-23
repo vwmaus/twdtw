@@ -1,3 +1,16 @@
+double precision function logistic_tw(DIST, TD, TW1, TW2) bind(C, name = "logistic_tw")
+  use iso_c_binding
+  implicit none
+  double precision, intent(in) :: DIST, TD, TW1, TW2
+  logistic_tw = DIST + 1.0 / (1.0 + exp(TW1 * (TD - TW2)))
+end function logistic_tw
+
+double precision function logistic_tw2(DIST, TD, TW1, TW2)
+  implicit none
+  double precision, intent(in) :: DIST, TD, TW1, TW2
+  logistic_tw2 = DIST + 1.0 / (1.0 + exp(TW1 * (TD - TW2)))
+end function logistic_tw2
+
 ! Compute TWDTW distance using logistic weight
 ! XM - matrix with the time series (N,D)
 ! YM - matrix with the temporal profile (M,D)
@@ -62,10 +75,11 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
   use iso_c_binding
   implicit none
   interface
-    function callback_func(x, y) result(result_val) bind(C)
-      use iso_c_binding
-      real(c_double), intent(in) :: x, y
-      real(c_double) :: result_val
+    function callback_func(x, y, z, w) bind(C)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      real(C_DOUBLE), intent(in) :: x, y, z, w
+      real(C_DOUBLE) :: callback_func
     end function callback_func
   end interface
 
@@ -90,7 +104,7 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
   do I = 2, N+1
     TD = ellapsed(YM(I-1,1) - XM(1,1))
     DIST = distance(YM, XM, N, M, D, I-1, 1)
-    CM(I,1) = CM(I-1,1) + callback_func(DIST, TD)
+    CM(I,1) = CM(I-1,1) + callback_func(DIST, TD, TW(1), TW(2))
     ! (DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2)))))
     DM(I,1) = 3
     VM(I,1) = 1
@@ -99,7 +113,7 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
   do J = 2, M
     TD = ellapsed(YM(2,1) - XM(J,1))
     DIST = distance(YM, XM, N, M, D, 1, J)
-    CM(2,J) = CM(2,J-1) + callback_func(DIST, TD)
+    CM(2,J) = CM(2,J-1) + callback_func(DIST, TD, TW(1), TW(2))
     ! (DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2)))))
     DM(1,J) = 2
     VM(1,J) = J
@@ -119,7 +133,7 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
         VM(I,J) = ZERO
       else
         DIST = distance(YM, XM, N, M, D, I-1, J)
-        CM(I,J) = callback_func(DIST, TD)
+        CM(I,J) = callback_func(DIST, TD, TW(1), TW(2))
         ! DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
       end if
       ! Initialize list of step cost
@@ -194,7 +208,7 @@ end subroutine twdtwf90
 subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   use, intrinsic :: ieee_arithmetic
   implicit none
-  double precision :: ellapsed, distance
+  double precision :: ellapsed, distance, logistic_tw2
   integer, intent(in) :: N, M, D, NS
   integer :: SM(NS,4), DM(N+1,M), VM(N+1,M), JB(N)
   double precision, intent(in) :: XM(M,D), YM(N,D), TW(2)
@@ -212,7 +226,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   do 21 I = 2, N+1
      TD = ellapsed(YM(I-1,1) - XM(1,1))
      DIST = distance(YM, XM, N, M, D, I-1, 1)
-     CM(I,1) = CM(I-1,1) + (DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2)))))
+     CM(I,1) = CM(I-1,1) + logistic_tw2(DIST, TD, TW(1), TW(2))
      DM(I,1) = 3
      VM(I,1) = 1
 21 continue
@@ -220,7 +234,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   do 31 J = 2, M
      TD = ellapsed(YM(2,1) - XM(J,1))
      DIST = distance(YM, XM, N, M, D, 1, J)
-     CM(2,J) = CM(2,J-1) + (DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2)))))
+     CM(2,J) = CM(2,J-1) + logistic_tw2(DIST, TD, TW(1), TW(2))
      DM(1,J) = 2
      VM(1,J) = J
 31 continue
@@ -238,7 +252,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
            goto 44
         else
            DIST = distance(YM, XM, N, M, D, I-1, J)
-           CM(I,J) = DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
+           CM(I,J) = logistic_tw2(DIST, TD, TW(1), TW(2))
         endif
 
         ! Initialize list of step cost

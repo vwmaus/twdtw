@@ -70,8 +70,10 @@ lines(y, col = "red")
 
 # Calculate TWDTW distance between x and y
 twdtw(x, y, tw = c(-.1, 50),
-  tw_r = function(dist,td) dist + 1.0 / (1.0 + exp(-0.1 * (td - 50))))
+  tw_r = function(dist,td,tw1,tw2) dist + 1.0 / (1.0 + exp(-0.1 * (td - 50))))
 
 twdtw(x, y, tw = c(-.1, 50), version = 'f90goto')
+
+twdtw(x, y, tw = c(-.1, 50), version = 'cpp')
 
 }

@@ -9,7 +9,7 @@ twdtw_f90gt <- function(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB) {
     invisible(.Call(`_twdtw_twdtw_f90gt`, XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB))
 }
 
-twdtw_f90 <- function(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, tw_r) {
+twdtw_f90 <- function(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, tw_r = NULL) {
     invisible(.Call(`_twdtw_twdtw_f90`, XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, tw_r))
 }
 
