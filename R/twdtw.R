@@ -34,10 +34,16 @@
 #' t <- seq(0, pi, length.out = n)
 #'
 #' x <- data.frame(date = seq(as.Date("2020-01-01"), by = "day", length.out = n),
-#'              value = sin(t)*2 + runif(n))
+#'                 b1 = sin(t)*2 + runif(n),
+#'                 b2 = sin(t)*2 + runif(n),
+#'                 b3 = sin(t)*2 + runif(n),
+#'                 b4 = sin(t)*2 + runif(n))
 #'
 #' y <- data.frame(date = seq(as.Date("2020-01-05"), by = "day", length.out = n),
-#'              value = sin(t)*2 + runif(n))
+#'              b1 = sin(t)*2 + runif(n),
+#'              b2 = sin(t)*2 + runif(n),
+#'              b3 = sin(t)*2 + runif(n),
+#'              b4 = sin(t)*2 + runif(n))
 #'
 #' plot(x, type = "l")
 #' lines(y, col = "red")

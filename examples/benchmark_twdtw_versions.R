@@ -29,6 +29,20 @@ cpp     = twdtw(x, y, tw = c(-.1, 50), version = 'cpp')
 identical(f90, f90goto)
 identical(f90, cpp)
 
+n <- 20
+t <- seq(0, pi, length.out = n)
+
+x <- data.frame(date = seq(as.Date("2020-01-01"), by = "day", length.out = n),
+                b1 = sin(t)*2 + runif(n),
+                b2 = sin(t)*2 + runif(n),
+                b3 = sin(t)*2 + runif(n),
+                b4 = sin(t)*2 + runif(n))
+
+y <- data.frame(date = seq(as.Date("2020-01-05"), by = "day", length.out = n),
+                b1 = sin(t)*2 + runif(n),
+                b2 = sin(t)*2 + runif(n),
+                b3 = sin(t)*2 + runif(n),
+                b4 = sin(t)*2 + runif(n))
 
 rbenchmark::benchmark(
   twdtw_f90     = twdtw(x, y, tw = c(-.1, 50),
@@ -36,6 +50,6 @@ rbenchmark::benchmark(
   twdtw_f90_tw  = twdtw(x, y, tw = c(-.1, 50), version = 'f90'),
   twdtw_f90goto = twdtw(x, y, tw = c(-.1, 50), version = 'f90goto'),
   twdtw_cpp     = twdtw(x, y, tw = c(-.1, 50), version = 'cpp'),
-  dtw_cpp       = dtw(x$value, y$value, distance.only = TRUE), # does not support time dimension
+  dtw_cpp       = dtw(x[,c(2,2:5)], y[,c(2,2:5)], distance.only = TRUE), # does not support time dimension
   replications = 100
 )

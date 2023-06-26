@@ -33,13 +33,13 @@ or 'cpp' for C++ version. Defaults to 'f90'. See details.}
 
 \item{index_column}{The column name of the time index. Defaults to "date".}
 
+\item{max_elapsed}{Numeric constraining the TWDTW calculation to the lower band
+given by the a maximum elapsed time. Defaults to Inf.}
+
 \item{all_matches}{Logical indicating whether to find all matches within the
 TWDTW matrix. Defaults to FALSE.}
 
 \item{...}{other par}
-
-\item{lower_band}{Logical indicating whether to constrain the TWDTW calculation
-to the lower band given by the time-weight parameter beta. Defaults to TRUE.}
 }
 \value{
 A numeric value representing the TWDTW distance between the two time series.
@@ -69,7 +69,7 @@ plot(x, type = "l")
 lines(y, col = "red")
 
 # Calculate TWDTW distance between x and y
-twdtw(x, y, tw = c(-20, 50), max_elapsed = 50,
+twdtw(x, y, max_elapsed = 20,
   tw_r = function(dist,td,tw1,tw2) dist + 1.0 / (1.0 + exp(-0.1 * (td - 50))))
 
 twdtw(x, y, tw = c(-.1, 50), max_elapsed = 50, version = 'f90goto')
