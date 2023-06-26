@@ -40,6 +40,35 @@ double precision function distance(YM, XM, N, M, D, I, J)
 end function distance
 
 
+double precision function tw_distance(Y, X, PAR, D, NPAR) bind(C, name = "tw_distance")
+  use, intrinsic :: ieee_arithmetic
+  implicit none
+  integer, intent(in) :: D, NPAR
+  double precision, intent(in) :: PAR(NPAR)
+  double precision, dimension(D), intent(in) :: X, Y
+  double precision :: ELP, DIST, absDiff, INF
+  integer :: K
+  double precision, parameter :: PC=366.0
+  INF = ieee_value(0.0, ieee_positive_inf)
+
+  ! Calculate elapsed time between the two measurements
+  absDiff = abs(Y(1) - X(1))
+  ELP = min(absDiff, PC - absDiff)
+  if (ELP.gt.PAR(3)) then
+    DIST = INF
+  else
+    ! Calculate 'n'-Dimensional Euclidean Distance
+    DIST = 0.0
+    do K = 2, D
+       DIST = DIST + (Y(K) - X(K))**2
+    end do
+    DIST = sqrt(DIST) + 1.0 / (1.0 + exp(PAR(1) * (ELP - PAR(2))))
+  end if
+
+  tw_distance = DIST
+end function tw_distance
+
+
 ! Computation ellapsed time in days
 ! TD - time difference in days
 double precision function ellapsed(X)
@@ -70,28 +99,30 @@ end function ellapsed
 ! NS - Number of rows in SM
 ! TW - Time-Weight parameters alpha and beta
 ! LB - Constrain TWDTW calculation to band given a maximum elapsed time
-subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_func) bind(C, name = "twdtwf90")
+subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, NPAR, callback_func) bind(C, name = "twdtwf90")
   use, intrinsic :: ieee_arithmetic
   use iso_c_binding
   implicit none
   interface
-    function callback_func(x, y, z, w) bind(C)
+    function callback_func(x, y, z, w, k) result(res) bind(C)
       use, intrinsic :: iso_c_binding
       implicit none
-      real(C_DOUBLE), intent(in) :: x, y, z, w
-      real(C_DOUBLE) :: callback_func
+      integer(c_int), intent(in) :: w, k
+      real(c_double), dimension(w), intent(in) :: x, y
+      real(c_double), dimension(k), intent(in) :: z
+      real(c_double) :: res
     end function callback_func
   end interface
 
   ! I/O Variables
   double precision :: ellapsed, distance
-  integer, intent(in) :: N, M, D, NS
+  integer, intent(in) :: N, M, D, NS, NPAR
   integer, intent(in) :: SM(NS,4)
   integer, intent(out) :: DM(N+1,M), VM(N+1,M), JB(N)
-  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB
+  double precision, intent(in) :: XM(M,D), YM(N,D), TW(NPAR), LB
   double precision, intent(out) :: CM(N+1,M)
   ! Internals
-  double precision :: W, CP(NS), VMIN, A, B, TD, DIST
+  double precision :: W, CP(NS), VMIN, A, B, TD, DIST, X(D), Y(D)
   integer :: I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO=0, ONE=1, JM, JLMIN, ILMIN
   double precision :: NAN, INF
   NAN = ieee_value(0.0, ieee_quiet_nan)
@@ -101,19 +132,21 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
 
   ! Initialize the first row and col of the matrices
   do I = 2, N+1
-    TD = ellapsed(YM(I-1,1) - XM(1,1))
-    DIST = distance(YM, XM, N, M, D, I-1, 1)
-    CM(I,1) = CM(I-1,1) + callback_func(DIST, TD, TW(1), TW(2))
-    ! (DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2)))))
+    !TD = ellapsed(YM(I-1,1) - XM(1,1))
+    !DIST = distance(YM, XM, N, M, D, I-1, 1)
+    Y = YM(I-1, :)
+    X = XM(1  , :)
+    CM(I,1) = CM(I-1,1) + callback_func(Y, X, TW, D, NPAR)
     DM(I,1) = 3
     VM(I,1) = 1
   end do
 
   do J = 2, M
-    TD = ellapsed(YM(2,1) - XM(J,1))
-    DIST = distance(YM, XM, N, M, D, 1, J)
-    CM(2,J) = CM(2,J-1) + callback_func(DIST, TD, TW(1), TW(2))
-    ! (DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2)))))
+    !TD = ellapsed(YM(2,1) - XM(J,1))
+    !DIST = distance(YM, XM, N, M, D, 1, J)
+    Y = YM(1, :)
+    X = XM(J, :)
+    CM(2,J) = CM(2,J-1) + callback_func(Y, X, TW, D, NPAR)
     DM(1,J) = 2
     VM(1,J) = J
   end do
@@ -125,46 +158,51 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
     do while ( I .le. N+1 )
       ! Calculate local distance
       ! the call takes I-1 because local matrix has an additional row at the beginning
-      TD = ellapsed(YM(I-1,1) - XM(J,1))
-      if (TD.gt.LB) then
-        CM(I,J) = INF
-        DM(I,J) = -ONE
-        VM(I,J) = ZERO
-      else
-        DIST = distance(YM, XM, N, M, D, I-1, J)
-        CM(I,J) = callback_func(DIST, TD, TW(1), TW(2))
-        ! DIST + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
-      end if
-      ! Initialize list of step cost
-      CP(:) = NAN
-      do K = 1, NS
-        PK = SM(K,1)
-        IL(K) = I - SM(K,2)
-        JL(K) = J - SM(K,3)
-        if ((IL(K).gt.ZERO).and.(JL(K).gt.ZERO)) then
-          W = SM(K,4)
-          if (W.eq.-ONE) then
-            CP(PK) = CM(IL(K),JL(K))
-          else
-            CP(PK) = CP(PK) + CM(IL(K),JL(K))*W
+      !TD = ellapsed(YM(I-1,1) - XM(J,1))
+      !if (TD.gt.LB) then
+      !  CM(I,J) = INF
+      !  DM(I,J) = -ONE
+      !  VM(I,J) = ZERO
+      !else
+        ! DIST = distance(YM, XM, N, M, D, I-1, J)
+      Y = YM(I-1, :)
+      X = XM(J  , :)
+      DM(I,J) = -ONE
+      VM(I,J) = ZERO
+      CM(I,J) = callback_func(Y, X, TW, D, NPAR)
+      if(ieee_is_finite(CM(I,J))) then
+          !end if
+          ! Initialize list of step cost
+          CP(:) = NAN
+          do K = 1, NS
+            PK = SM(K,1)
+            IL(K) = I - SM(K,2)
+            JL(K) = J - SM(K,3)
+            if ((IL(K).gt.ZERO).and.(JL(K).gt.ZERO)) then
+              W = SM(K,4)
+              if (W.eq.-ONE) then
+                CP(PK) = CM(IL(K),JL(K))
+              else
+                CP(PK) = CP(PK) + CM(IL(K),JL(K))*W
+              end if
+            end if
+          end do
+          KMIN = -ONE
+          VMIN = INF
+          do K = 1, NS
+            PK = SM(K,1)
+            if (CP(PK).eq.CP(PK).and.CP(PK).lt.VMIN) then
+              KMIN = PK
+              VMIN = CP(PK)
+              ILMIN = IL(K)
+              JLMIN = JL(K)
+            end if
+          end do
+          if (KMIN.gt.-ONE) then
+            CM(I,J) = VMIN
+            DM(I,J) = KMIN
+            VM(I,J) = VM(ILMIN, JLMIN)
           end if
-        end if
-      end do
-      KMIN = -ONE
-      VMIN = INF
-      do K = 1, NS
-        PK = SM(K,1)
-        if (CP(PK).eq.CP(PK).and.CP(PK).lt.VMIN) then
-          KMIN = PK
-          VMIN = CP(PK)
-          ILMIN = IL(K)
-          JLMIN = JL(K)
-        end if
-      end do
-      if (KMIN.gt.-ONE) then
-        CM(I,J) = VMIN
-        DM(I,J) = KMIN
-        VM(I,J) = VM(ILMIN, JLMIN)
       end if
       I = I + 1
     end do
