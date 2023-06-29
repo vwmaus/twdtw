@@ -68,7 +68,7 @@ double distancecpp(const NumericMatrix& YM, const NumericMatrix& XM, int N, int 
  */
 // [[Rcpp::export]]
 void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& CM, IntegerMatrix& DM, IntegerMatrix& VM,
-               const IntegerMatrix& SM, int N, int M, int D, int NS, const NumericVector& TW, double LB, IntegerVector& JB) {
+               const IntegerMatrix& SM, int N, int M, int D, int NS, const NumericVector& TW, double LB, IntegerVector& JB, double CL) {
   const double INF = std::numeric_limits<double>::infinity();
   const int ZERO = 0;
   const int ONE = 1;

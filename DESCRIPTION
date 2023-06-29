@@ -1,6 +1,6 @@
 Package: twdtw
 Title: Time-Weighted Dynamic Time Warping
-Version: 1.0.0.9000
+Version: 0.0.1.9000
 Authors@R: 
     c(
       person(
@@ -17,9 +17,17 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Imports:
+    Rcpp,
     dtw,
-    Rcpp
+    proxy,
+    lubridate
 Suggests:
     readr,
     rbenchmark
 LinkingTo: Rcpp
+Collate: 
+    'RcppExports.R'
+    'convert_date_to_numeric.R'
+    'init.R'
+    'twdtw.R'
+    'zzz.R'

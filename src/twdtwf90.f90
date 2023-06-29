@@ -38,12 +38,12 @@ end function distance
 double precision function ellapsed(X)
   implicit none
   double precision, intent(in) :: X
-  double precision, parameter :: PC=366.0, HPC = PC/2
+  double precision, parameter :: CL=366.0, HCL = CL/2
   ! Compute ellapsed time difference
   ellapsed = sqrt(X * X)
   ! Correct ellapsed time with year cycle
-  if (ellapsed > HPC) then
-     ellapsed = PC - ellapsed
+  if (ellapsed > HCL) then
+     ellapsed = CL - ellapsed
   end if
   ellapsed = abs(ellapsed)
 end function ellapsed
@@ -63,7 +63,7 @@ end function ellapsed
 ! NS - Number of rows in SM
 ! TW - Time-Weight parameters alpha and beta
 ! LB - Constrain TWDTW calculation to band given a maximum elapsed time
-subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_func) bind(C, name = "twdtwf90")
+subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL, callback_func) bind(C, name = "twdtwf90")
   use, intrinsic :: ieee_arithmetic
   use iso_c_binding
   implicit none
@@ -77,16 +77,14 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
   end interface
 
   ! I/O Variables
-  ! double precision :: distance
   integer, intent(in) :: N, M, D, NS
   integer, intent(in) :: SM(NS,4)
   integer, intent(out) :: DM(N+1,M), VM(N+1,M), JB(N)
-  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB
+  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB, CL
   double precision, intent(out) :: CM(N+1,M)
   ! Internals
   double precision :: W, CP(NS), VMIN, A, B, TD, DIST
   integer :: I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO=0, ONE=1, JM, JLMIN, ILMIN, VM_value
-  double precision, parameter :: PC=366.0
   double precision :: NAN, INF
   NAN = ieee_value(0.0, ieee_quiet_nan)
   INF = ieee_value(0.0, ieee_positive_inf)
@@ -97,7 +95,7 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
   ! Initialize the first row and col of the matrices
   do I = 2, N+1
     TD = abs(YM(I-1,1) - XM(1,1))
-    TD = min(TD, PC - TD)
+    TD = min(TD, CL - TD)
     DIST = 0.0
     do K = 2, D
       DIST = DIST + (YM(I-1,K) - XM(1,K))**2
@@ -109,7 +107,7 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
 
   do J = 2, M
     TD = abs(YM(2,1) - XM(J,1))
-    TD = min(TD, PC - TD)
+    TD = min(TD, CL - TD)
     DIST = 0.0
     do K = 2, D
       DIST = DIST + (YM(1,K) - XM(J,K))**2
@@ -127,7 +125,7 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, callback_fu
       ! Calculate local distance
       ! the call takes I-1 because local matrix has an additional row at the beginning
       TD = abs(YM(I-1,1) - XM(J,1))
-      TD = min(TD, PC - TD)
+      TD = min(TD, CL - TD)
       if (TD.gt.LB) then
         CM(I,J) = INF
         DM(I,J) = -ONE
@@ -209,16 +207,15 @@ end subroutine twdtwf90
 ! NS - Number of rows in SM
 ! TW - Time-Weight parameters alpha and beta
 ! LB - Constrain TWDTW calculation to band given by a maximum elapsed time
-subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
+subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
   use, intrinsic :: ieee_arithmetic
   implicit none
   integer, intent(in) :: N, M, D, NS
   integer :: SM(NS,4), DM(N+1,M), VM(N+1,M), JB(N)
-  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB
+  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB, CL
   double precision :: CM(N+1,M), W, CP(NS), VMIN, A, B, TD, DIST
   integer :: I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO, ONE, JM, ILMIN, JLMIN, IML, VM_value
   parameter(ZERO=0, ONE=1)
-  double precision, parameter :: PC=366.0
   double precision :: NAN, INF
   NAN = ieee_value(0.0, ieee_quiet_nan)
   INF = ieee_value(0.0, ieee_positive_inf)
@@ -228,7 +225,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
   ! Initialize the first row and column of the matrices
   do 21 I = 2, N+1
      TD = abs(YM(I-1,1) - XM(1,1))
-     TD = min(TD, PC - TD)
+     TD = min(TD, CL - TD)
      DIST = 0.0
      do K = 2, D
        DIST = DIST + (YM(I-1,K) - XM(1,K))**2
@@ -240,7 +237,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
 
   do 31 J = 2, M
      TD = abs(YM(2,1) - XM(J,1))
-     TD = min(TD, PC - TD)
+     TD = min(TD, CL - TD)
      DIST = 0.0
      do K = 2, D
        DIST = DIST + (YM(1,K) - XM(J,K))**2
@@ -256,7 +253,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB)
      I = 2
      do 22 while (I .le. N+1)
         TD = abs(YM(I-1,1) - XM(J,1))
-        TD = min(TD, PC - TD)
+        TD = min(TD, CL - TD)
         if (TD.gt.LB) then
            CM(I,J) = INF
            DM(I,J) = -ONE

@@ -1,5 +1,8 @@
 #' @useDynLib twdtw, .registration = TRUE
 #' @import Rcpp
+#' @importFrom proxy pr_DB
+#' @importFrom lubridate year month day hour minute second yday mday wday isoweek leap_year decimal_date
+#'
 NULL
 
 #' @importFrom dtw symmetric1
@@ -17,3 +20,4 @@ dtw::asymmetric
 #' @importFrom dtw rabinerJuangStepPattern
 #' @export
 dtw::rabinerJuangStepPattern
+

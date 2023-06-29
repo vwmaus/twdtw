@@ -2,78 +2,105 @@
 % Please edit documentation in R/twdtw.R
 \name{twdtw}
 \alias{twdtw}
-\title{Calculate TWDTW Distance between Time Series}
+\alias{twdtw.data.frame}
+\alias{twdtw.matrix}
+\title{Calculate Time-Weighted Dynamic Time Warping (TWDTW) distance}
 \usage{
-twdtw(
+twdtw(x, y, ...)
+
+\method{twdtw}{data.frame}(
   x,
   y,
-  tw = c(100, 1),
-  step_matrix = symmetric1,
-  version = "f90",
-  index_column = "date",
+  time_weight_par = NULL,
+  time_weight_fun = NULL,
+  time_cycle_length = NULL,
+  time_cycle_scale = NULL,
+  index_column_name = "time",
+  dtw_step_matrix = symmetric1,
   max_elapsed = Inf,
-  all_matches = FALSE,
+  return_distance = TRUE,
+  return_all_matches = FALSE,
+  version = "f90",
+  ...
+)
+
+\method{twdtw}{matrix}(
+  x,
+  y,
+  time_weight_par = NULL,
+  time_weight_fun = NULL,
+  time_cycle_length = NULL,
+  time_cycle_scale = NULL,
+  index_column_position = 1,
+  dtw_step_matrix = symmetric1,
+  max_elapsed = Inf,
+  return_distance = TRUE,
+  return_all_matches = FALSE,
+  version = "f90",
   ...
 )
 }
 \arguments{
-\item{x}{A tibble, data.frame, or data.table representing the first time series.}
+\item{x}{A data.frame or matrix representing the first time series.}
 
-\item{y}{A tibble, data.frame, or data.table representing the second time series.}
+\item{y}{A data.frame or matrix representing the second time series.}
 
-\item{tw}{Numeric vector of length 2 representing the time-weight parameters alpha and beta.
-Defaults to c(100, 1) (set weight to zero).}
+\item{...}{Additional parameters to pass to the time weighting function.}
 
-\item{step_matrix}{A matrix specifying the step pattern for the TWDTW algorithm.
-Defaults to symmetric1.}
+\item{time_weight_par}{(optional) A numeric vector of parameters to be used with the time weighting function.}
 
-\item{version}{A string identifying the version of twdtw implementation.
-Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements,
-or 'cpp' for C++ version. Defaults to 'f90'. See details.}
+\item{time_weight_fun}{(optional) A user-defined function for time weighting.}
 
-\item{index_column}{The column name of the time index. Defaults to "date".}
+\item{time_cycle_length}{Required for data.frame inputs. A character string indicating the larger unit of time.
+It must be one of "year", "month", "day", "hour", "minute". It can also receive a numeric value when time_cycle_scale is numeric.}
 
-\item{max_elapsed}{Numeric constraining the TWDTW calculation to the lower band
-given by the a maximum elapsed time. Defaults to Inf.}
+\item{time_cycle_scale}{Required for data.frame inputs. A character string specifying the time cycle scale or an integer value.}
 
-\item{all_matches}{Logical indicating whether to find all matches within the
-TWDTW matrix. Defaults to FALSE.}
+\item{index_column_name}{(optional) The column name of the time index for data.frame inputs. Defaults to "time".}
 
-\item{...}{other par}
+\item{dtw_step_matrix}{A matrix specifying the step pattern for the TWDTW algorithm. Defaults to symmetric1.}
+
+\item{max_elapsed}{Numeric value constraining the TWDTW calculation to the lower band given by a maximum elapsed time. Defaults to Inf.}
+
+\item{return_distance}{Logical indicating whether to return the TWDTW distance. Defaults to TRUE.}
+
+\item{return_all_matches}{Logical indicating whether to find all matches within the TWDTW matrix. Defaults to FALSE.}
+
+\item{version}{A string identifying the version of TWDTW implementation. Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements, or 'cpp' for C++ version. Defaults to 'f90'.}
+
+\item{index_column_position}{(optional) The column position of the time index for matrix inputs. Defaults to 1.}
 }
 \value{
-A numeric value representing the TWDTW distance between the two time series.
+If return_distance = TRUE, a numeric value representing the TWDTW distance between the two time series.
+If return_all_matches = TRUE, a matrix of all matches within the TWDTW matrix.
 }
 \description{
-This function calculates the Time-Weighted Dynamic Time Warping (TWDTW) distance
-between two time series.
-}
-\details{
-The Fortran 90 versions of twdtw typically outperform the C++ version.
-Additionally, the '\code{f90goto}' version, which utilizes \code{goto} statements,
-tends to be slightly faster than the '\code{f90}' version that only uses
-while and for loops.
+This function calculates the Time-Weighted Dynamic Time Warping (TWDTW) distance between two time series.
 }
 \examples{
 
-n <- 20
+n <- 23
 t <- seq(0, pi, length.out = n)
+d <- seq(as.Date('2020-09-01'), length.out = n, by = "15 day")
 
-x <- data.frame(date = seq(as.Date("2020-01-01"), by = "day", length.out = n),
-             value = sin(t)*2 + runif(n))
+x <- data.frame(time = d, value = sin(t)*2 + runif(n))
 
-y <- data.frame(date = seq(as.Date("2020-01-05"), by = "day", length.out = n),
-             value = sin(t)*2 + runif(n))
+y <- data.frame(time = d + 30, value = sin(t)*2 + runif(n))
 
-plot(x, type = "l")
+plot(x, type = "l", xlim = range(c(d, d + 5)))
 lines(y, col = "red")
 
 # Calculate TWDTW distance between x and y
-twdtw(x, y, max_elapsed = 20,
-  tw_r = function(dist,td,tw1,tw2) dist + 1.0 / (1.0 + exp(-0.1 * (td - 50))))
+twdtw(x, y,
+      time_cycle_length = 'year',
+      time_cycle_scale = 'day',
+      time_weight_par = c(steepness = -0.1, midpoint = 50))
 
-twdtw(x, y, tw = c(-.1, 50), max_elapsed = 50, version = 'f90goto')
+#twdtw(x, y, max_elapsed = 20,
+#   tw_r = function(dist,td,tw1,tw2) dist + 1.0 / (1.0 + exp(-0.1 * (td - 50))))
 
-twdtw(x, y, tw = c(-.1, 50), max_elapsed = 50, version = 'cpp')
+# twdtw(x, y, tw = c(-.1, 50), max_elapsed = 50, version = 'f90goto')
+
+# twdtw(x, y, tw = c(-.1, 50), max_elapsed = 50, version = 'cpp')
 
 }
