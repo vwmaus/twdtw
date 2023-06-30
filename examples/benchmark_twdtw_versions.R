@@ -1,6 +1,7 @@
 library(twdtw)
 library(dtw)
 library(ggplot2)
+library(rbenchmark)
 
 n <- 23
 t <- seq(0, pi, length.out = n)
@@ -38,12 +39,17 @@ twdtw_call <- function(x = ts_x,
         time_weight_par = time_weight_par, ...)
 }
 
-rbenchmark::benchmark(
-  twdtw_f90     = twdtw_call(version = 'f90'),
-  twdtw_f90_fun = twdtw_call(version = 'f90', time_weight_fun = function(x,y,tw1,tw2) x + 1.0 / (1.0 + exp(tw1 * (y - tw2)))),
-  twdtw_f90goto = twdtw_call(version = 'f90goto'),
-  twdtw_cpp     = twdtw_call(version = 'cpp'),
-  dtw_cpp       = dtw(ts_x[,c(2,2:4)], ts_y[,c(2,2:4)], distance.only = TRUE), # does not support time dimension
+# Benchmark default TWDTW call
+benchmark(
+  twdtw_f90        = twdtw_call(version = 'f90'),
+  twdtw_f90_fun    = twdtw_call(version = 'f90', time_weight_fun = function(x,y,tw1,tw2) x + 1.0 / (1.0 + exp(tw1 * (y - tw2)))),
+  twdtw_f90goto    = twdtw_call(version = 'f90goto'),
+  twdtw_cpp        = twdtw_call(version = 'cpp'),
+  twdtw_f90_lb     = twdtw_call(version = 'f90', max_elapsed = 30),
+  twdtw_f90_fun_lb = twdtw_call(version = 'f90', max_elapsed = 30, time_weight_fun = function(x,y,tw1,tw2) x + 1.0 / (1.0 + exp(tw1 * (y - tw2)))),
+  twdtw_f90goto_lb = twdtw_call(version = 'f90goto', max_elapsed = 30),
+  twdtw_cpp_lb     = twdtw_call(version = 'cpp', max_elapsed = 30),
+  dtw_cpp          = dtw(ts_x[,c(2,2:4)], ts_y[,c(2,2:4)], distance.only = TRUE), # does not support time dimension
   replications = 1000
 )
 
@@ -52,9 +58,16 @@ twdtw_f90     = twdtw_call(version = 'f90')
 twdtw_f90_fun = twdtw_call(version = 'f90', time_weight_fun = function(x,y,tw1,tw2) x + 1.0 / (1.0 + exp(tw1 * (y - tw2))))
 twdtw_f90goto = twdtw_call(version = 'f90goto')
 twdtw_cpp     = twdtw_call(version = 'cpp')
+twdtw_f90_lb     = twdtw_call(version = 'f90', max_elapsed = 30)
+twdtw_f90_fun_lb = twdtw_call(version = 'f90', max_elapsed = 30, time_weight_fun = function(x,y,tw1,tw2) x + 1.0 / (1.0 + exp(tw1 * (y - tw2))))
+twdtw_f90goto_lb = twdtw_call(version = 'f90goto', max_elapsed = 30)
+twdtw_cpp_lb     = twdtw_call(version = 'cpp', max_elapsed = 30)
 
 # Check results
 identical(twdtw_f90, twdtw_f90_fun)
-identical(twdtw_f90_fun, twdtw_f90goto)
-identical(twdtw_f90goto, twdtw_cpp)
-
+identical(twdtw_f90, twdtw_f90goto)
+identical(twdtw_f90, twdtw_cpp)
+identical(twdtw_f90, twdtw_f90_lb)
+identical(twdtw_f90, twdtw_f90_fun_lb)
+identical(twdtw_f90, twdtw_f90goto_lb)
+identical(twdtw_f90, twdtw_cpp_lb)
