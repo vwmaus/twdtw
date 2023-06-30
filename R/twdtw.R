@@ -96,7 +96,7 @@
 #'       time_scale = 'day',
 #'       time_weight = c(steepness = 0.1, midpoint = 50))
 #'
-#' # Pass a generic time-weight fucntion
+#' # Pass a generic time-weight function
 #' twdtw(x, y,
 #'       cycle_length = 'year',
 #'       time_scale = 'day',
