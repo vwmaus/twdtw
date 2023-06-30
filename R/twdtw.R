@@ -260,7 +260,7 @@ twdtw.matrix <- function(x, y,
 
   # Prepare arguments
   args <- list(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
-  if (version == 'f90'){
+  if (version == 'f90' & is.function(time_weight)){
     args$tw_r <- time_weight
   }
 
