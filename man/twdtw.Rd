@@ -6,15 +6,14 @@
 \alias{twdtw.matrix}
 \title{Calculate Time-Weighted Dynamic Time Warping (TWDTW) distance}
 \usage{
-twdtw(x, y, ...)
+twdtw(x, y, time_weight, time_cycle_length, time_cycle_scale, ...)
 
 \method{twdtw}{data.frame}(
   x,
   y,
-  time_weight_par = NULL,
-  time_weight_fun = NULL,
-  time_cycle_length = NULL,
-  time_cycle_scale = NULL,
+  time_weight,
+  time_cycle_length,
+  time_cycle_scale,
   index_column_name = "time",
   dtw_step_matrix = symmetric1,
   max_elapsed = Inf,
@@ -27,9 +26,8 @@ twdtw(x, y, ...)
 \method{twdtw}{matrix}(
   x,
   y,
-  time_weight_par = NULL,
-  time_weight_fun = NULL,
-  time_cycle_length = NULL,
+  time_weight,
+  time_cycle_length,
   time_cycle_scale = NULL,
   index_column_position = 1,
   dtw_step_matrix = symmetric1,
@@ -41,24 +39,25 @@ twdtw(x, y, ...)
 )
 }
 \arguments{
-\item{x}{A data.frame or matrix representing the first time series.}
+\item{x}{A data.frame or matrix representing time series.}
 
-\item{y}{A data.frame or matrix representing the second time series.}
+\item{y}{A data.frame or matrix representing a labelled time series (reference).}
 
-\item{...}{Additional parameters to pass to the time weighting function.}
+\item{time_weight}{A numeric vector with lenght two (steepness and midpoint of logistic weight) or a function. See details.}
 
-\item{time_weight_par}{(optional) A numeric vector of parameters to be used with the time weighting function.}
+\item{time_cycle_length}{A character string or a numeric indicating the larger unit of time.
+It must be one of "year", "month", "day", "hour", or "minute". It can also receive a numeric value when \code{time_cycle_scale} is numeric.}
 
-\item{time_weight_fun}{(optional) A user-defined function for time weighting.}
+\item{time_cycle_scale}{A character string or numeric indicating the smaller unit of time,
+which is a division of the \code{time_cycle_length}. If \code{time_cycle_length} is "year", \code{time_cycle_scale} can be one of
+"month", "day", "hour", "minute", "second". If \code{time_cycle_length} is "month", \code{time_cycle_scale} can be "day",
+"hour", "minute", "second", and so on. It can also receive a numeric value when \code{time_cycle_length} is numeric.}
 
-\item{time_cycle_length}{Required for data.frame inputs. A character string indicating the larger unit of time.
-It must be one of "year", "month", "day", "hour", "minute". It can also receive a numeric value when time_cycle_scale is numeric.}
-
-\item{time_cycle_scale}{Required for data.frame inputs. A character string specifying the time cycle scale or an integer value.}
+\item{...}{ignore}
 
 \item{index_column_name}{(optional) The column name of the time index for data.frame inputs. Defaults to "time".}
 
-\item{dtw_step_matrix}{A matrix specifying the step pattern for the TWDTW algorithm. Defaults to symmetric1.}
+\item{dtw_step_matrix}{A matrix specifying the step pattern for the DTW algorithm. Defaults to \code{\link[dtw]{symmetric1}}.}
 
 \item{max_elapsed}{Numeric value constraining the TWDTW calculation to the lower band given by a maximum elapsed time. Defaults to Inf.}
 
@@ -76,6 +75,36 @@ If return_all_matches = TRUE, a matrix of all matches within the TWDTW matrix.
 }
 \description{
 This function calculates the Time-Weighted Dynamic Time Warping (TWDTW) distance between two time series.
+}
+\details{
+TWDTW calculates a time-weighted version of DTW by modifying each element of the
+DTW's local cost matrix (see details in Maus et al. (2016) and Maus et al. (2019)).
+The default time weight is calculated using a logistic function
+that adds a weight to each pair of observations in the time series \code{x} and \code{y}
+based on the time difference between observations, such that
+
+\deqn{tw(dist_{i,j}) = dist_{i,j} + \frac{1}{1 + e^{-{\alpha} (el_{i,j} - {\beta})}}}
+
+Where:
+\itemize{
+\item{\eqn{tw} is the time-weight function}
+\item{\eqn{dist_{i,j}} is the Euclidean distance between the i-th element of \code{x} and the j-th element of \code{y} in a multi-dimensional space}
+\item{\eqn{el_{i,j}} is the time elapsed between the i-th element of \code{x} and the j-th element of \code{y}}
+\item{\eqn{\alpha} and \eqn{\beta} are the steepness and midpoint of the logistic function, respectively}
+}
+
+The logistic function is implemented as the default option in the C++ and Fortran versions of the code.
+To use the native implementation, \eqn{\alpha} and \eqn{\beta} must be provided as a numeric vector of
+length two using the argument \code{time_weight}. This implementation provides high processing performance.
+
+The \code{time_weight} argument also accepts a function defined in R, allowing the user to define a different
+weighting scheme. However, passing a function to \code{time_weight} can degrade the processing performance,
+i.e., it can be up to 3x slower than using the default logistic time-weight.
+
+A time-weight function passed to \code{time_weight} must receive two numeric arguments and return a
+single numeric value. The first argument received is the Euclidean \eqn{dist_{i,j}} and the second
+is the elapsed time \eqn{el_{i,j}}. For example,
+\code{time_weight = function(dist, el) dist + 0.1*el} defines a linear weighting scheme with a slope of 0.1.
 }
 \examples{
 
@@ -96,26 +125,36 @@ lines(y, col = "red")
 twdtw(x, y,
       time_cycle_length = 'year',
       time_cycle_scale = 'day',
-      time_weight_par = c(steepness = -0.1, midpoint = 50))
+      time_weight = c(steepness = 0.1, midpoint = 50))
 
 # Pass a generic time-weight fucntion
 twdtw(x, y,
       time_cycle_length = 'year',
       time_cycle_scale = 'day',
-      time_weight_par = c(steepness = -0.1, midpoint = 50),
-      time_weight_fun = function(x,y,tw1,tw2) x + 1.0 / (1.0 + exp(tw1 * (y - tw2))))
+      time_weight = function(x,y) x + 1.0 / (1.0 + exp(-0.1 * (y - 50))))
 
 # Test other version
 twdtw(x, y,
       time_cycle_length = 'year',
       time_cycle_scale = 'day',
-      time_weight_par = c(steepness = -0.1, midpoint = 50),
+      time_weight = c(steepness = 0.1, midpoint = 50),
       version = 'f90goto')
 
 twdtw(x, y,
       time_cycle_length = 'year',
       time_cycle_scale = 'day',
-      time_weight_par = c(steepness = -0.1, midpoint = 50),
+      time_weight = c(steepness = 0.1, midpoint = 50),
       version = 'cpp')
 
+}
+\references{
+Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Moura, Y. M. (2016).
+A Time-Weighted Dynamic Time Warping Method for Land-Use and Land-Cover Mapping.
+IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing, 9(8), 3729-3739.
+\url{https://doi.org/10.1109/JSTARS.2016.2517118}
+
+Maus, V., Camara, G., Appel, M., & Pebesma, E. (2019).
+dtwSat: Time-Weighted Dynamic Time Warping for Satellite Image Time Series Analysis in R.
+Journal of Statistical Software, 88(5), 1-31.
+\url{https://doi.org/10.18637/jss.v088.i05}
 }
