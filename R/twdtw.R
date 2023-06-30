@@ -248,7 +248,6 @@ twdtw.matrix <- function(x, y,
   LB <- as.double(max_elapsed)
   if (is.function(time_weight)){
     TW <- as.double(c(0.0, 0.0))
-    time_weight <- time_weight_wrapper(time_weight)
   } else {
     TW <- as.double(time_weight)
   }
@@ -279,11 +278,3 @@ twdtw.matrix <- function(x, y,
   return(min(d))
 
 }
-
-# Define the time-weight wrapper function
-time_weight_wrapper <- function(fn) {
-  function(x, y, z = 0.0, w = 0.0) {
-    fn(x, y)
-  }
-}
-

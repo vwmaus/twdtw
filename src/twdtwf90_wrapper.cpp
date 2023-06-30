@@ -25,10 +25,12 @@ struct CallbackFuncObject {
   CallbackFuncObject(Function input_tw_r_fun) : tw_r_fun(input_tw_r_fun) {}
 
   double call(double* x, double* y, double* z, double* w) const {
-    NumericVector result = tw_r_fun(*x, *y, *z, *w);  // Call the R function
+    // Regardless of z and w, we always call the R function with x and y
+    NumericVector result = tw_r_fun(*x, *y);
     return result[0];  // Extract the first element as the result
   }
 };
+
 
 typedef std::function<double(double*, double*, double*, double*)> FuncType;
 
