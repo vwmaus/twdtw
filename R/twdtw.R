@@ -6,19 +6,22 @@
 #' @param x A data.frame or matrix representing time series.
 #' @param y A data.frame or matrix representing a labelled time series (reference).
 #' @param time_weight A numeric vector with lenght two (steepness and midpoint of logistic weight) or a function. See details.
-#' @param time_cycle_length A character string or a numeric indicating the larger unit of time.
-#' It must be one of "year", "month", "day", "hour", or "minute". It can also receive a numeric value when \code{time_cycle_scale} is numeric.
-#' @param time_cycle_scale A character string or numeric indicating the smaller unit of time,
-#' which is a division of the \code{time_cycle_length}. If \code{time_cycle_length} is "year", \code{time_cycle_scale} can be one of
-#' "month", "day", "hour", "minute", "second". If \code{time_cycle_length} is "month", \code{time_cycle_scale} can be "day",
-#' "hour", "minute", "second", and so on. It can also receive a numeric value when \code{time_cycle_length} is numeric.
-#' @param index_column_name (optional) The column name of the time index for data.frame inputs. Defaults to "time".
-#' @param index_column_position (optional) The column position of the time index for matrix inputs. Defaults to 1.
+#' @param cycle_length A character string or a numeric indicating the larger unit of time.
+#' It must be one of "year", "month", "day", "hour", or "minute". It can also receive a numeric value when \code{time_scale} is numeric.
+#' @param time_scale A character string or numeric indicating the smaller unit of time,
+#' which is a division of the \code{cycle_length}. If \code{cycle_length} is "year", \code{time_scale} can be one of
+#' "month", "day", "hour", "minute", "second". If \code{cycle_length} is "month", \code{time_scale} can be "day",
+#' "hour", "minute", "second", and so on. It can also receive a numeric value when \code{cycle_length} is numeric.
+#' @param index_column (optional) The column name of the time index for data.frame inputs. Defaults to "time".
+#' For matrix input, an integer indicating the column with the time index. Defaults to 1.
 #' @param dtw_step_matrix A matrix specifying the step pattern for the DTW algorithm. Defaults to \code{\link[dtw]{symmetric1}}.
 #' @param max_elapsed Numeric value constraining the TWDTW calculation to the lower band given by a maximum elapsed time. Defaults to Inf.
-#' @param return_distance Logical indicating whether to return the TWDTW distance. Defaults to TRUE.
-#' @param return_all_matches Logical indicating whether to find all matches within the TWDTW matrix. Defaults to FALSE.
-#' @param version A string identifying the version of TWDTW implementation. Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements, or 'cpp' for C++ version. Defaults to 'f90'.
+#' @param output A character string defining the output. It must be one of 'distance', 'matches', 'internals'. Defaults to 'distance'.
+#' 'distance' will return the lowest TWDTW distance between \code{x} and \code{y}.
+#' 'matches' will return all matches within the TWDTW matrix. 'internals' will return all TWDTW internal data.
+#' @param version A string identifying the version of TWDTW implementation.
+#' Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements,
+#' or 'cpp' for C++ version. Defaults to 'f90'. See details.
 #' @param ... ignore
 #'
 #'
@@ -51,9 +54,15 @@
 #' is the elapsed time \eqn{el_{i,j}}. For example,
 #' \code{time_weight = function(dist, el) dist + 0.1*el} defines a linear weighting scheme with a slope of 0.1.
 #'
+#' The Fortran 90 versions of \code{twdtw} typically outperform the C++ version.
+#' Additionally, the '`f90goto`' version, which utilizes `goto` statements,
+#' tends to be slightly faster than the '`f90`' version, which uses only while and for loops.
+#'
 #' @return
-#' If return_distance = TRUE, a numeric value representing the TWDTW distance between the two time series.
-#' If return_all_matches = TRUE, a matrix of all matches within the TWDTW matrix.
+#' If output = 'distance', a numeric value representing the TWDTW distance between the two time series.
+#' If output = 'matches', a numeric matrix of all TWDTW matches.
+#' For each match the starting index, ending index, and distance are returned.
+#' If output = 'internals' a list of all TWDTW internal data is returned.
 #'
 #' @references
 #' Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Moura, Y. M. (2016).
@@ -83,33 +92,33 @@
 #'
 #' # Calculate TWDTW distance between x and y using logistic weight
 #' twdtw(x, y,
-#'       time_cycle_length = 'year',
-#'       time_cycle_scale = 'day',
+#'       cycle_length = 'year',
+#'       time_scale = 'day',
 #'       time_weight = c(steepness = 0.1, midpoint = 50))
 #'
 #' # Pass a generic time-weight fucntion
 #' twdtw(x, y,
-#'       time_cycle_length = 'year',
-#'       time_cycle_scale = 'day',
+#'       cycle_length = 'year',
+#'       time_scale = 'day',
 #'       time_weight = function(x,y) x + 1.0 / (1.0 + exp(-0.1 * (y - 50))))
 #'
 #' # Test other version
 #' twdtw(x, y,
-#'       time_cycle_length = 'year',
-#'       time_cycle_scale = 'day',
+#'       cycle_length = 'year',
+#'       time_scale = 'day',
 #'       time_weight = c(steepness = 0.1, midpoint = 50),
 #'       version = 'f90goto')
 #'
 #' twdtw(x, y,
-#'       time_cycle_length = 'year',
-#'       time_cycle_scale = 'day',
+#'       cycle_length = 'year',
+#'       time_scale = 'day',
 #'       time_weight = c(steepness = 0.1, midpoint = 50),
 #'       version = 'cpp')
 #'
 #' @include convert_date_to_numeric.R
 #'
 #' @export
-twdtw <- function(x, y, time_weight, time_cycle_length, time_cycle_scale, ...) {
+twdtw <- function(x, y, time_weight, cycle_length, time_scale, ...) {
   UseMethod("twdtw")
 }
 
@@ -117,13 +126,12 @@ twdtw <- function(x, y, time_weight, time_cycle_length, time_cycle_scale, ...) {
 #' @rdname twdtw
 twdtw.data.frame <- function(x, y,
                              time_weight,
-                             time_cycle_length,
-                             time_cycle_scale,
-                             index_column_name = 'time',
+                             cycle_length,
+                             time_scale,
+                             index_column = 'time',
                              dtw_step_matrix = symmetric1,
                              max_elapsed = Inf,
-                             return_distance = TRUE,
-                             return_all_matches = FALSE,
+                             output = 'distance',
                              version = 'f90', ...) {
 
   # Check that 'x' and 'y' are data.frames
@@ -131,40 +139,39 @@ twdtw.data.frame <- function(x, y,
     stop("Both x and y need to be data.frames")
   }
 
-  if (is.null(time_cycle_length)) stop("The 'time_cycle_length' argument is missing.")
-  if (is.null(time_cycle_scale)) stop("The 'time_cycle_scale' argument is missing.")
+  if (is.null(cycle_length)) stop("The 'cycle_length' argument is missing.")
+  if (is.null(time_scale)) stop("The 'time_scale' argument is missing.")
 
   # The dimensions of the time series must match
   if (!setequal(names(y), names(x))) {
     stop("The dimensions (columns) of the time series 'x' and 'y' do not match.")
   }
 
-  # The dimensions of the time series must match and 'index_column_name' must be present in both 'x' and 'y'
-  if (!setequal(names(y), names(x)) & !index_column_name %in% names(x)) {
+  # The dimensions of the time series must match and 'index_column' must be present in both 'x' and 'y'
+  if (!setequal(names(y), names(x)) & !index_column %in% names(x)) {
     stop("The dimensions (columns) of the time series 'x' and 'y' do not match.")
   }
 
-  # Position 'index_column_name' at the first column
-  x <- x[, c(index_column_name, setdiff(names(x), index_column_name)), drop = FALSE]
+  # Position 'index_column' at the first column
+  x <- x[, c(index_column, setdiff(names(x), index_column)), drop = FALSE]
 
   # Sort dimensions of y according to x
   y <- y[, names(x), drop = FALSE]
 
-  # Convert 'index_column_name' to numeric based on 'time_cycle_length' and 'time_cycle_scale'
-  x[, index_column_name] <- convert_date_to_numeric(x[, index_column_name], time_cycle_length, time_cycle_scale)
-  y[, index_column_name] <- convert_date_to_numeric(y[, index_column_name], time_cycle_length, time_cycle_scale)
+  # Convert 'index_column' to numeric based on 'cycle_length' and 'time_scale'
+  x[, index_column] <- convert_date_to_numeric(x[, index_column], cycle_length, time_scale)
+  y[, index_column] <- convert_date_to_numeric(y[, index_column], cycle_length, time_scale)
 
   # call .twdtw function
   twdtw(x = as.matrix(x),
         y = as.matrix(y),
         time_weight = time_weight,
-        time_cycle_length = time_cycle_length,
-        time_cycle_scale = time_cycle_scale,
-        index_column_position = 1,
+        cycle_length = cycle_length,
+        time_scale = time_scale,
+        index_column = 1,
         dtw_step_matrix = dtw_step_matrix,
         max_elapsed = max_elapsed,
-        return_distance = return_distance,
-        return_all_matches = return_all_matches,
+        output = output,
         version = version)
 }
 
@@ -172,13 +179,12 @@ twdtw.data.frame <- function(x, y,
 #' @rdname twdtw
 twdtw.matrix <- function(x, y,
                          time_weight,
-                         time_cycle_length,
-                         time_cycle_scale = NULL,
-                         index_column_position = 1,
+                         cycle_length,
+                         time_scale = NULL,
+                         index_column = 1,
                          dtw_step_matrix = symmetric1,
                          max_elapsed = Inf,
-                         return_distance = TRUE,
-                         return_all_matches = FALSE,
+                         output = 'distance',
                          version = 'f90', ...) {
 
   # Check that 'x' and 'y' are matrix
@@ -195,17 +201,17 @@ twdtw.matrix <- function(x, y,
     stop("'time_weight' should be either a function or a numeric vector with length two")
   }
 
-  # Check if 'time_cycle_length' is declared
-  if (is.null(time_cycle_length)) stop("The 'time_cycle_length' argument is missing.")
+  # Check if 'cycle_length' is declared
+  if (is.null(cycle_length)) stop("The 'cycle_length' argument is missing.")
 
   # Get maximum possible value that a specific time cycle and scale
-  if (is.character(time_cycle_length)){
-    if (is.null(time_cycle_scale)) stop("The 'time_cycle_scale' argument is missing for 'time_cycle_length' type character.")
-    time_cycle_length <- calculate_max_cycle_length(time_cycle_length, time_cycle_scale)
+  if (is.character(cycle_length)){
+    if (is.null(time_scale)) stop("The 'time_scale' argument is missing for 'cycle_length' type character.")
+    cycle_length <- calculate_max_cycle_length(cycle_length, time_scale)
   }
 
-  # Position 'index_column_name' at the first column
-  new_order <- c(index_column_position, setdiff(1:ncol(x), index_column_position))
+  # Position 'index_column' at the first column
+  new_order <- c(index_column, setdiff(1:ncol(x), index_column))
   x <- x[, new_order, drop = FALSE]
   y <- y[, new_order, drop = FALSE]
 
@@ -214,10 +220,9 @@ twdtw.matrix <- function(x, y,
          y = y,
          time_weight = time_weight,
          dtw_step_matrix = dtw_step_matrix,
-         time_cycle_length = time_cycle_length,
+         cycle_length = cycle_length,
          max_elapsed = max_elapsed,
-         return_distance = return_distance,
-         return_all_matches = return_all_matches,
+         output = output,
          version = version)
 }
 
@@ -225,11 +230,10 @@ twdtw.matrix <- function(x, y,
 # Internal function
 .twdtw <- function(x, y,
                    time_weight,
-                   time_cycle_length,
+                   cycle_length,
                    dtw_step_matrix = symmetric1,
                    max_elapsed = Inf,
-                   return_distance = TRUE,
-                   return_all_matches = FALSE,
+                   output = 'distance',
                    version = 'f90', ...) {
 
   # Initialize data with correct dimensions and types
@@ -244,7 +248,7 @@ twdtw.matrix <- function(x, y,
   JB <- as.integer(rep(0, N))
   SM <- matrix(as.integer(dtw_step_matrix), nrow(dtw_step_matrix), ncol(dtw_step_matrix))
   NS <- as.integer(nrow(SM))
-  CL <- as.double(time_cycle_length)
+  CL <- as.double(cycle_length)
   LB <- as.double(max_elapsed)
   if (is.function(time_weight)){
     TW <- as.double(c(0.0, 0.0))
@@ -265,16 +269,12 @@ twdtw.matrix <- function(x, y,
 
   # Call twdtw
   do.call(fn, args)
-
   b <- JB[JB!=0]
-  a <- VM[-1,][N,b]
-  d <- CM[-1,][N,b]
-  candidates <- matrix(c(a, b, d), ncol = 3, byrow = F)
 
-  if (return_all_matches) {
-    return(candidates)
-  }
-
-  return(min(d))
+  switch (output,
+    'distance' = min(CM[-1,][N,b]),
+    'matches' = matrix(c(VM[-1,][N,b], b, CM[-1,][N,b]), ncol = 3, byrow = F),
+    'internals' = list(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
+  )
 
 }

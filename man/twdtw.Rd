@@ -6,19 +6,18 @@
 \alias{twdtw.matrix}
 \title{Calculate Time-Weighted Dynamic Time Warping (TWDTW) distance}
 \usage{
-twdtw(x, y, time_weight, time_cycle_length, time_cycle_scale, ...)
+twdtw(x, y, time_weight, cycle_length, time_scale, ...)
 
 \method{twdtw}{data.frame}(
   x,
   y,
   time_weight,
-  time_cycle_length,
-  time_cycle_scale,
-  index_column_name = "time",
+  cycle_length,
+  time_scale,
+  index_column = "time",
   dtw_step_matrix = symmetric1,
   max_elapsed = Inf,
-  return_distance = TRUE,
-  return_all_matches = FALSE,
+  output = "distance",
   version = "f90",
   ...
 )
@@ -27,13 +26,12 @@ twdtw(x, y, time_weight, time_cycle_length, time_cycle_scale, ...)
   x,
   y,
   time_weight,
-  time_cycle_length,
-  time_cycle_scale = NULL,
-  index_column_position = 1,
+  cycle_length,
+  time_scale = NULL,
+  index_column = 1,
   dtw_step_matrix = symmetric1,
   max_elapsed = Inf,
-  return_distance = TRUE,
-  return_all_matches = FALSE,
+  output = "distance",
   version = "f90",
   ...
 )
@@ -45,33 +43,36 @@ twdtw(x, y, time_weight, time_cycle_length, time_cycle_scale, ...)
 
 \item{time_weight}{A numeric vector with lenght two (steepness and midpoint of logistic weight) or a function. See details.}
 
-\item{time_cycle_length}{A character string or a numeric indicating the larger unit of time.
-It must be one of "year", "month", "day", "hour", or "minute". It can also receive a numeric value when \code{time_cycle_scale} is numeric.}
+\item{cycle_length}{A character string or a numeric indicating the larger unit of time.
+It must be one of "year", "month", "day", "hour", or "minute". It can also receive a numeric value when \code{time_scale} is numeric.}
 
-\item{time_cycle_scale}{A character string or numeric indicating the smaller unit of time,
-which is a division of the \code{time_cycle_length}. If \code{time_cycle_length} is "year", \code{time_cycle_scale} can be one of
-"month", "day", "hour", "minute", "second". If \code{time_cycle_length} is "month", \code{time_cycle_scale} can be "day",
-"hour", "minute", "second", and so on. It can also receive a numeric value when \code{time_cycle_length} is numeric.}
+\item{time_scale}{A character string or numeric indicating the smaller unit of time,
+which is a division of the \code{cycle_length}. If \code{cycle_length} is "year", \code{time_scale} can be one of
+"month", "day", "hour", "minute", "second". If \code{cycle_length} is "month", \code{time_scale} can be "day",
+"hour", "minute", "second", and so on. It can also receive a numeric value when \code{cycle_length} is numeric.}
 
 \item{...}{ignore}
 
-\item{index_column_name}{(optional) The column name of the time index for data.frame inputs. Defaults to "time".}
+\item{index_column}{(optional) The column name of the time index for data.frame inputs. Defaults to "time".
+For matrix input, an integer indicating the column with the time index. Defaults to 1.}
 
 \item{dtw_step_matrix}{A matrix specifying the step pattern for the DTW algorithm. Defaults to \code{\link[dtw]{symmetric1}}.}
 
 \item{max_elapsed}{Numeric value constraining the TWDTW calculation to the lower band given by a maximum elapsed time. Defaults to Inf.}
 
-\item{return_distance}{Logical indicating whether to return the TWDTW distance. Defaults to TRUE.}
+\item{output}{A character string defining the output. It must be one of 'distance', 'matches', 'internals'. Defaults to 'distance'.
+'distance' will return the lowest TWDTW distance between \code{x} and \code{y}.
+'matches' will return all matches within the TWDTW matrix. 'internals' will return all TWDTW internal data.}
 
-\item{return_all_matches}{Logical indicating whether to find all matches within the TWDTW matrix. Defaults to FALSE.}
-
-\item{version}{A string identifying the version of TWDTW implementation. Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements, or 'cpp' for C++ version. Defaults to 'f90'.}
-
-\item{index_column_position}{(optional) The column position of the time index for matrix inputs. Defaults to 1.}
+\item{version}{A string identifying the version of TWDTW implementation.
+Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements,
+or 'cpp' for C++ version. Defaults to 'f90'. See details.}
 }
 \value{
-If return_distance = TRUE, a numeric value representing the TWDTW distance between the two time series.
-If return_all_matches = TRUE, a matrix of all matches within the TWDTW matrix.
+If output = 'distance', a numeric value representing the TWDTW distance between the two time series.
+If output = 'matches', a numeric matrix of all TWDTW matches.
+For each match the starting index, ending index, and distance are returned.
+If output = 'internals' a list of all TWDTW internal data is returned.
 }
 \description{
 This function calculates the Time-Weighted Dynamic Time Warping (TWDTW) distance between two time series.
@@ -105,6 +106,10 @@ A time-weight function passed to \code{time_weight} must receive two numeric arg
 single numeric value. The first argument received is the Euclidean \eqn{dist_{i,j}} and the second
 is the elapsed time \eqn{el_{i,j}}. For example,
 \code{time_weight = function(dist, el) dist + 0.1*el} defines a linear weighting scheme with a slope of 0.1.
+
+The Fortran 90 versions of \code{twdtw} typically outperform the C++ version.
+Additionally, the '\code{f90goto}' version, which utilizes \code{goto} statements,
+tends to be slightly faster than the '\code{f90}' version, which uses only while and for loops.
 }
 \examples{
 
@@ -123,26 +128,26 @@ lines(y, col = "red")
 
 # Calculate TWDTW distance between x and y using logistic weight
 twdtw(x, y,
-      time_cycle_length = 'year',
-      time_cycle_scale = 'day',
+      cycle_length = 'year',
+      time_scale = 'day',
       time_weight = c(steepness = 0.1, midpoint = 50))
 
 # Pass a generic time-weight fucntion
 twdtw(x, y,
-      time_cycle_length = 'year',
-      time_cycle_scale = 'day',
+      cycle_length = 'year',
+      time_scale = 'day',
       time_weight = function(x,y) x + 1.0 / (1.0 + exp(-0.1 * (y - 50))))
 
 # Test other version
 twdtw(x, y,
-      time_cycle_length = 'year',
-      time_cycle_scale = 'day',
+      cycle_length = 'year',
+      time_scale = 'day',
       time_weight = c(steepness = 0.1, midpoint = 50),
       version = 'f90goto')
 
 twdtw(x, y,
-      time_cycle_length = 'year',
-      time_cycle_scale = 'day',
+      cycle_length = 'year',
+      time_scale = 'day',
       time_weight = c(steepness = 0.1, midpoint = 50),
       version = 'cpp')
 

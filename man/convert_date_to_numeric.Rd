@@ -4,17 +4,22 @@
 \alias{convert_date_to_numeric}
 \title{Convert date to numeric value based on time cycle}
 \usage{
-convert_date_to_numeric(date_column, time_cycle_length, time_cycle_scale)
+convert_date_to_numeric(date_column, cycle_length, time_scale)
 }
 \arguments{
 \item{date_column}{(Date or POSIXct) The column of dates to be converted.}
 
-\item{time_cycle_length}{(character or integer) The length of the time cycle. If character, it should be one of: 'year', 'month', 'day', 'hour', 'minute', 'second'. If numeric, it represents the length of the cycle in arbitrary units.}
+\item{cycle_length}{(character or integer) The length of the time cycle.
+If character, it should be one of: 'year', 'month', 'day', 'hour', 'minute', 'second'.
+If numeric, it represents the length of the cycle in arbitrary units.}
 
-\item{time_cycle_scale}{(character or integer) The scale of the time cycle. If character, it should be one of: 'year', 'month', 'day', 'hour', 'minute', 'second'. If numeric, it represents the scale of the cycle in arbitrary units.}
+\item{time_scale}{(character or integer) The scale of the time cycle.
+If character, it should be one of: 'year', 'month', 'day', 'hour', 'minute', 'second'.
+If numeric, it represents the scale of the cycle in arbitrary units.}
 }
 \value{
-A numeric vector with the same length as \code{date_column}, where each date has been converted to a numeric value based on the specified time cycle.
+A numeric vector with the same length as \code{date_column},
+where each date has been converted to a numeric value based on the specified time cycle and scale.
 }
 \description{
 This function converts a date or datetime column to a numeric format

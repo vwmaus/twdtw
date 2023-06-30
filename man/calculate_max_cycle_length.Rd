@@ -4,21 +4,21 @@
 \alias{calculate_max_cycle_length}
 \title{Calculate the Maximum Possible Value of a Time Cycle}
 \usage{
-calculate_max_cycle_length(time_cycle_length, time_cycle_scale)
+calculate_max_cycle_length(cycle_length, time_scale)
 }
 \arguments{
-\item{time_cycle_length}{A character string indicating the larger unit of time.
+\item{cycle_length}{A character string indicating the larger unit of time.
 It must be one of "year", "month", "day", "hour", "minute".}
 
-\item{time_cycle_scale}{A character string indicating the smaller unit of time,
-which is a division of the time_cycle_length. If time_cycle_length is "year",
-time_cycle_scale can be one of "month", "day", "hour", "minute", "second".
-If time_cycle_length is "month", time_cycle_scale can be "day", "hour", "minute",
+\item{time_scale}{A character string indicating the smaller unit of time,
+which is a division of the \code{cycle_length}. If \code{cycle_length} is "year",
+\code{time_scale} can be one of "month", "day", "hour", "minute", "second".
+If \code{cycle_length} is "month", \code{time_scale} can be "day", "hour", "minute",
 "second", and so on.}
 }
 \value{
-The function returns the maximum possible value that the time_cycle_scale
-can take within one time_cycle_length.
+The function returns the maximum possible value that the \code{time_scale}
+can take within one \code{cycle_length}.
 }
 \description{
 This function returns the maximum possible value that a specific time
