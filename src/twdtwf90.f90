@@ -1,3 +1,16 @@
+! This is a Fortran function that applies a logistic transformation on an input time difference (TD) and distance (DIST)
+! using a pair of weights (TW1, TW2). It is intended to be called from C, and thus uses the iso_c_binding module
+! to ensure compatibility.
+
+! Args:
+! DIST: A double precision value representing the distance parameter in the logistic transformation.
+! TD: A double precision value representing the time difference parameter in the logistic transformation.
+! TW1: A double precision value representing the first weight parameter in the logistic transformation.
+! TW2: A double precision value representing the second weight parameter in the logistic transformation.
+
+! Returns:
+! A double precision value that is the result of applying the logistic transformation on DIST and TD
+! using the weights TW1 and TW2.
 double precision function logistic_tw(DIST, TD, TW1, TW2) bind(C, name = "logistic_tw")
   use iso_c_binding
   implicit none
@@ -5,52 +18,8 @@ double precision function logistic_tw(DIST, TD, TW1, TW2) bind(C, name = "logist
   logistic_tw = DIST + 1.0 / (1.0 + exp(-TW1 * (TD - TW2)))
 end function logistic_tw
 
-! Compute TWDTW distance using logistic weight
-! XM - matrix with the time series (N,D)
-! YM - matrix with the temporal profile (M,D)
-! N  - Number of rows in CM, DM, and VM - time series
-! M  - Number of columns CM, DM, and VM - temporal profile
-! D  - Number of spectral dimensions including time in XM and YM
-! I  - Single point in the time series to calculate the local distance
-! J  - Single point in the temporal profile to calculate the local distance
-! A  - Time-Weight parameter alpha
-! B  - Time-Weight parameter beta
 
-
-double precision function distance(YM, XM, N, M, D, I, J)
-  implicit none
-  integer, intent(in) :: N, M, D, I, J
-  double precision, intent(in) :: XM(M,D), YM(N,D)
-  double precision :: DIST
-  integer :: K
-
-  DIST = 0.0
-  do K = 2, D
-     DIST = DIST + (YM(I,K) - XM(J,K))**2
-  end do
-
-  distance = sqrt(DIST)
-end function distance
-
-
-! Computation ellapsed time in days
-! TD - time difference in days
-double precision function ellapsed(X)
-  implicit none
-  double precision, intent(in) :: X
-  double precision, parameter :: CL=366.0, HCL = CL/2
-  ! Compute ellapsed time difference
-  ellapsed = sqrt(X * X)
-  ! Correct ellapsed time with year cycle
-  if (ellapsed > HCL) then
-     ellapsed = CL - ellapsed
-  end if
-  ellapsed = abs(ellapsed)
-end function ellapsed
-
-
-
-! Computation of TWDTW cost matrix
+! Computation of TWDTW
 ! XM - matrix with the time series (N,D)
 ! YM - matrix with the temporal profile (M,D)
 ! CM - Output cumulative cost matrix
@@ -63,6 +32,8 @@ end function ellapsed
 ! NS - Number of rows in SM
 ! TW - Time-Weight parameters alpha and beta
 ! LB - Constrain TWDTW calculation to band given a maximum elapsed time
+! CL - The length of the time cycle
+! callback_func - A time-weight fucntion
 subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL, callback_func) bind(C, name = "twdtwf90")
   use, intrinsic :: ieee_arithmetic
   use iso_c_binding
