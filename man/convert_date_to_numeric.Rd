@@ -22,8 +22,7 @@ based on a specified time cycle length and scale.
 }
 \examples{
 
-convert_date_to_numeric(Sys.Date(), "year", "day")
-convert_date_to_numeric(Sys.time(), "day", "hour")
-convert_date_to_numeric(Sys.time(), 100, 10)
+convert_date_to_numeric(Sys.Date(), "year", "day") # Day of the year
+convert_date_to_numeric(Sys.time(), "day", "hour") # Hour of the day
 
 }

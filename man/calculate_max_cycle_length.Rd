@@ -26,8 +26,8 @@ component can take, given a cycle length and scale.
 }
 \examples{
 
-calculate_max_cycle_length("year", "month")  # returns 12
-calculate_max_cycle_length("day", "minute")  # returns 1440
-calculate_max_cycle_length("year", "day")  # returns 1440
+calculate_max_cycle_length("year", "month")  # Maximum months is a year 12
+calculate_max_cycle_length("day", "minute")  # Maximum minutes in a day 1440
+calculate_max_cycle_length("year", "day")    # Maximum days in a year 366
 
 }

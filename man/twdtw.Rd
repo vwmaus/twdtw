@@ -79,28 +79,43 @@ This function calculates the Time-Weighted Dynamic Time Warping (TWDTW) distance
 }
 \examples{
 
+# Create a time series
 n <- 23
 t <- seq(0, pi, length.out = n)
 d <- seq(as.Date('2020-09-01'), length.out = n, by = "15 day")
 
-x <- data.frame(time = d, value = sin(t)*2 + runif(n))
+x <- data.frame(time = d,      v1 = sin(t)*2 + runif(n))
 
-y <- data.frame(time = d + 30, value = sin(t)*2 + runif(n))
+# shift time by 30 days
+y <- data.frame(time = d + 30, v1 = sin(t)*2 + runif(n))
 
 plot(x, type = "l", xlim = range(c(d, d + 5)))
 lines(y, col = "red")
 
-# Calculate TWDTW distance between x and y
+# Calculate TWDTW distance between x and y using logistic weight
 twdtw(x, y,
       time_cycle_length = 'year',
       time_cycle_scale = 'day',
       time_weight_par = c(steepness = -0.1, midpoint = 50))
 
-#twdtw(x, y, max_elapsed = 20,
-#   tw_r = function(dist,td,tw1,tw2) dist + 1.0 / (1.0 + exp(-0.1 * (td - 50))))
+# Pass a generic time-weight fucntion
+twdtw(x, y,
+      time_cycle_length = 'year',
+      time_cycle_scale = 'day',
+      time_weight_par = c(steepness = -0.1, midpoint = 50),
+      time_weight_fun = function(x,y,tw1,tw2) x + 1.0 / (1.0 + exp(tw1 * (y - tw2))))
 
-# twdtw(x, y, tw = c(-.1, 50), max_elapsed = 50, version = 'f90goto')
+# Test other version
+twdtw(x, y,
+      time_cycle_length = 'year',
+      time_cycle_scale = 'day',
+      time_weight_par = c(steepness = -0.1, midpoint = 50),
+      version = 'f90goto')
 
-# twdtw(x, y, tw = c(-.1, 50), max_elapsed = 50, version = 'cpp')
+twdtw(x, y,
+      time_cycle_length = 'year',
+      time_cycle_scale = 'day',
+      time_weight_par = c(steepness = -0.1, midpoint = 50),
+      version = 'cpp')
 
 }
