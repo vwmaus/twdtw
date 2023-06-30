@@ -44,7 +44,7 @@ double distancecpp(const NumericMatrix& YM, const NumericMatrix& XM, int N, int 
   }
 
   dist = std::sqrt(dist);
-  dist += 1.0 / (1.0 + std::exp(TW(0) * (ellapsedcpp(YM((I-1), 0) - XM((J-1), 0)) - TW(1))));
+  dist += 1.0 / (1.0 + std::exp(-TW(0) * (ellapsedcpp(YM((I-1), 0) - XM((J-1), 0)) - TW(1))));
 
   return dist;
 }

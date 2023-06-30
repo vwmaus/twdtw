@@ -2,7 +2,7 @@ double precision function logistic_tw(DIST, TD, TW1, TW2) bind(C, name = "logist
   use iso_c_binding
   implicit none
   double precision, intent(in) :: DIST, TD, TW1, TW2
-  logistic_tw = DIST + 1.0 / (1.0 + exp(TW1 * (TD - TW2)))
+  logistic_tw = DIST + 1.0 / (1.0 + exp(-TW1 * (TD - TW2)))
 end function logistic_tw
 
 ! Compute TWDTW distance using logistic weight
@@ -230,7 +230,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
      do K = 2, D
        DIST = DIST + (YM(I-1,K) - XM(1,K))**2
      end do
-     CM(I,1) = CM(I-1,1) + sqrt(DIST) + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
+     CM(I,1) = CM(I-1,1) + sqrt(DIST) + 1.0 / (1.0 + exp(-TW(1) * (TD - TW(2))))
      DM(I,1) = 3
      VM(I,1) = 1
 21 continue
@@ -242,7 +242,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
      do K = 2, D
        DIST = DIST + (YM(1,K) - XM(J,K))**2
      end do
-     CM(2,J) = CM(2,J-1) + sqrt(DIST) + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
+     CM(2,J) = CM(2,J-1) + sqrt(DIST) + 1.0 / (1.0 + exp(-TW(1) * (TD - TW(2))))
      DM(1,J) = 2
      VM(1,J) = J
 31 continue
@@ -264,7 +264,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
            do K = 2, D
              DIST = DIST + (YM(I-1,K) - XM(J,K))**2
            end do
-           CM(I,J) = sqrt(DIST) + 1.0 / (1.0 + exp(TW(1) * (TD - TW(2))))
+           CM(I,J) = sqrt(DIST) + 1.0 / (1.0 + exp(-TW(1) * (TD - TW(2))))
         endif
 
         ! Initialize list of step cost
