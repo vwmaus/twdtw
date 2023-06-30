@@ -29,14 +29,14 @@ ts_y <- data.frame(time = d + 30,
 # Define TWDTW call
 twdtw_call <- function(x = ts_x,
                        y = ts_y,
-                       time_cycle_length = 'year',
-                       time_cycle_scale = 'day',
-                       time_weight_par = c(steepness = 0.1, midpoint = 50), ...){
+                       cycle_length = 'year',
+                       time_scale = 'day',
+                       time_weight = c(steepness = 0.1, midpoint = 50), ...){
   twdtw(x = x,
         y = y,
-        time_cycle_length = time_cycle_length,
-        time_cycle_scale = time_cycle_scale,
-        time_weight = time_weight_par, ...)
+        cycle_length = cycle_length,
+        time_scale = time_scale,
+        time_weight = time_weight, ...)
 }
 
 tw_r_fun <- function(x,y) x + 1.0 / (1.0 + exp(-0.1 * (y - 50)))
