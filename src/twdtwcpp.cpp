@@ -67,23 +67,24 @@ void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& 
   }
 
   for (int J = 1; J < M; ++J) {
-    double TD = std::fabs(YM(1, 0) - XM(J, 0));
+    double TD = std::fabs(YM(0, 0) - XM(J, 0));
     TD = std::min(TD, CL - TD);
     double DIST = 0.0;
     for (int K = 1; K < D; ++K) {
       DIST += std::pow(YM(0, K) - XM(J, K), 2);
     }
     CM(1, J) = CM(1, J-1) + sqrt(DIST) + 1.0 / (1.0 + std::exp(-TW[0] * (TD - TW[1])));
+    //Rcpp::Rcout << "DIST: " << CM(1, J) << std::endl;
     DM(0, J) = 2;
-    VM(0, J) = J;
+    VM(1, J) = J + 1;
   }
 
   // Compute cumulative cost matrix
   int J = 2;
   while (J <= M) {
-    int I = 2;
+    int I = 3;
     while (I <= N + 1) {
-      double TD = std::fabs(YM(I - 1, 0) - XM(J - 1, 0));
+      double TD = std::fabs(YM(I - 2, 0) - XM(J - 1, 0));
       TD = std::min(TD, CL - TD);
       if (TD > LB) {
         CM(I - 1, J - 1) = INF;
@@ -92,7 +93,7 @@ void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& 
       } else {
         double DIST = 0.0;
         for (int K = 1; K < D; ++K) {
-          DIST += std::pow(YM(I - 1, K) - XM(J - 1, K), 2);
+          DIST += std::pow(YM(I - 2, K) - XM(J - 1, K), 2);
         }
         CM(I - 1, J - 1) = sqrt(DIST) + 1.0 / (1.0 + std::exp(-TW[0] * (TD - TW[1])));
       }

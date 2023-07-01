@@ -77,27 +77,29 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL, callbac
   end do
 
   do J = 2, M
-    TD = abs(YM(2,1) - XM(J,1))
+    TD = abs(YM(1,1) - XM(J,1))
     TD = min(TD, CL - TD)
     DIST = 0.0
     do K = 2, D
       DIST = DIST + (YM(1,K) - XM(J,K))**2
     end do
     CM(2,J) = CM(2,J-1) + callback_func(sqrt(DIST), TD, TW(1), TW(2))
+    !WRITE(*, *) "DIST:", CM(2,J)
     DM(1,J) = 2
-    VM(1,J) = J
+    VM(2,J) = J
   end do
 
   ! Compute cumulative cost matrix
   J = 2
   do while ( J .le. M )
-    I = 2
+    I = 3
     do while ( I .le. N+1 )
       ! Calculate local distance
       ! the call takes I-1 because local matrix has an additional row at the beginning
       TD = abs(YM(I-1,1) - XM(J,1))
       TD = min(TD, CL - TD)
       if (TD.gt.LB) then
+        !WRITE(*, *) "LB:", LB
         CM(I,J) = INF
         DM(I,J) = -ONE
         VM(I,J) = ZERO
@@ -207,7 +209,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
 21 continue
 
   do 31 J = 2, M
-     TD = abs(YM(2,1) - XM(J,1))
+     TD = abs(YM(1,1) - XM(J,1))
      TD = min(TD, CL - TD)
      DIST = 0.0
      do K = 2, D
@@ -215,13 +217,13 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
      end do
      CM(2,J) = CM(2,J-1) + sqrt(DIST) + 1.0 / (1.0 + exp(-TW(1) * (TD - TW(2))))
      DM(1,J) = 2
-     VM(1,J) = J
+     VM(2,J) = J
 31 continue
 
   ! Compute cumulative cost matrix
   J = 2
   do 32 while (J .le. M)
-     I = 2
+     I = 3
      do 22 while (I .le. N+1)
         TD = abs(YM(I-1,1) - XM(J,1))
         TD = min(TD, CL - TD)
