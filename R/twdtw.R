@@ -54,9 +54,13 @@
 #' is the elapsed time \eqn{el_{i,j}}. For example,
 #' \code{time_weight = function(dist, el) dist + 0.1*el} defines a linear weighting scheme with a slope of 0.1.
 #'
-#' The Fortran 90 versions of \code{twdtw} typically outperform the C++ version.
-#' Additionally, the '`f90goto`' version, which utilizes `goto` statements,
-#' tends to be slightly faster than the '`f90`' version, which uses only while and for loops.
+#' The Fortran 90 versions of \code{twdtw} are usually faster than the C++ version.
+#' The '`f90goto`' version, which uses goto statements, is slightly quicker than the
+#' '`f90`' version that uses while and for loops. You can use the `max_elapsed` parameter
+#' to limit the TWDTW calculation to a maximum elapsed time. This means it will skip
+#' comparisons between pairs of observations in `x` and `y` that are far apart in time.
+#' Be careful, though: if `max_elapsed` is set too low, it could change the results.
+#' It important to try out different settings for your specific problem.
 #'
 #' @return
 #' If output = 'distance', a numeric value representing the TWDTW distance between the two time series.
