@@ -219,6 +219,10 @@ twdtw.matrix <- function(x, y,
   x <- x[, new_order, drop = FALSE]
   y <- y[, new_order, drop = FALSE]
 
+  # X and Y should not contain NAs
+  x <- na.omit(x)
+  y <- na.omit(y)
+
   # call .twdtw function
   .twdtw(x = x,
          y = y,

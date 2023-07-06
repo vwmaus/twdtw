@@ -1,16 +1,11 @@
 library(twdtw)
 library(dtw)
-library(ggplot2)
 library(rbenchmark)
 
 n <- 23
 t <- seq(0, pi, length.out = n)
 d <- seq(as.Date('2020-09-01'), length.out = n, by = "15 day")
 
-# Define funcrion to normalize time series
-fun_range <- function(x) {
-  (x - min(x)) / (max(x) - min(x))
-}
 
 # Create time series with 4 dimensions
 ts_x <- data.frame(time = d,
@@ -55,21 +50,3 @@ benchmark(
   replications = 1000
 )
 
-# All calls must return the same result
-twdtw_f90     = twdtw_call(version = 'f90')
-twdtw_f90_fun = twdtw_call(version = 'f90', time_weight = tw_r_fun)
-twdtw_f90goto = twdtw_call(version = 'f90goto')
-twdtw_cpp     = twdtw_call(version = 'cpp')
-twdtw_f90_lb     = twdtw_call(version = 'f90', max_elapsed = 30)
-twdtw_f90_fun_lb = twdtw_call(version = 'f90', max_elapsed = 30, time_weight = tw_r_fun)
-twdtw_f90goto_lb = twdtw_call(version = 'f90goto', max_elapsed = 30)
-twdtw_cpp_lb     = twdtw_call(version = 'cpp', max_elapsed = 30)
-
-# Check results
-identical(twdtw_f90, twdtw_f90_fun)
-identical(twdtw_f90, twdtw_f90goto)
-identical(twdtw_f90, twdtw_cpp)
-identical(twdtw_f90, twdtw_f90_lb)
-identical(twdtw_f90, twdtw_f90_fun_lb)
-identical(twdtw_f90, twdtw_f90goto_lb)
-identical(twdtw_f90, twdtw_cpp_lb)

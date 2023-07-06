@@ -1,6 +1,7 @@
 #' @useDynLib twdtw, .registration = TRUE
 #' @import Rcpp
 #' @importFrom proxy pr_DB
+#' @importFrom stats na.omit
 #'
 NULL
 
