@@ -52,28 +52,30 @@ convert_date_to_numeric <- function(date_column, cycle_length, time_scale) {
   } else {
     switch(cycle_length,
            "year" = switch(time_scale,
-                           "month" = month(date_column),
-                           "day" = yday(date_column),
-                           "hour" = hour(date_column),
-                           "minute" = minute(date_column),
-                           "second" = second(date_column)),
+                           "month" = as.numeric(format(date_column, "%m")),
+                           "day" = as.numeric(format(date_column, "%j")),
+                           "hour" = as.numeric(format(date_column, "%j"))*24 + as.numeric(format(date_column, "%H")),
+                           "minute" = (as.numeric(format(date_column, "%j"))*24 + as.numeric(format(date_column, "%H")))*60 + as.numeric(format(date_column, "%M")),
+                           "second" = ((as.numeric(format(date_column, "%j"))*24 + as.numeric(format(date_column, "%H")))*60 + as.numeric(format(date_column, "%M")))*60 + as.numeric(format(date_column, "%S"))),
            "month" = switch(time_scale,
-                            "day" = mday(date_column),
-                            "hour" = hour(date_column),
-                            "minute" = minute(date_column),
-                            "second" = second(date_column)),
+                            "day" = as.numeric(format(date_column, "%d")),
+                            "hour" = as.numeric(format(date_column, "%d"))*24 + as.numeric(format(date_column, "%H")),
+                            "minute" = (as.numeric(format(date_column, "%d"))*24 + as.numeric(format(date_column, "%H")))*60 + as.numeric(format(date_column, "%M")),
+                            "second" = ((as.numeric(format(date_column, "%d"))*24 + as.numeric(format(date_column, "%H")))*60 + as.numeric(format(date_column, "%M")))*60 + as.numeric(format(date_column, "%S"))),
            "day" = switch(time_scale,
-                          "hour" = hour(date_column),
-                          "minute" = minute(date_column),
-                          "second" = second(date_column)),
+                          "hour" = as.numeric(format(date_column, "%H")),
+                          "minute" = as.numeric(format(date_column, "%H"))*60 + as.numeric(format(date_column, "%M")),
+                          "second" = (as.numeric(format(date_column, "%H"))*60 + as.numeric(format(date_column, "%M")))*60 + as.numeric(format(date_column, "%S"))),
            "hour" = switch(time_scale,
-                           "minute" = minute(date_column),
-                           "second" = second(date_column)),
+                           "minute" = as.numeric(format(date_column, "%M")),
+                           "second" = as.numeric(format(date_column, "%M"))*60 + as.numeric(format(date_column, "%S"))),
            "minute" = switch(time_scale,
-                             "second" = second(date_column))
+                             "second" = as.numeric(format(date_column, "%S")))
     )
   }
 }
+
+
 
 #' Calculate the Maximum Possible Value of a Time Cycle
 #'

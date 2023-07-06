@@ -1,7 +1,6 @@
 #' @useDynLib twdtw, .registration = TRUE
 #' @import Rcpp
 #' @importFrom proxy pr_DB
-#' @importFrom lubridate year month day hour minute second yday mday wday isoweek leap_year decimal_date
 #'
 NULL
 

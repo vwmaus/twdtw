@@ -107,9 +107,13 @@ single numeric value. The first argument received is the Euclidean \eqn{dist_{i,
 is the elapsed time \eqn{el_{i,j}}. For example,
 \code{time_weight = function(dist, el) dist + 0.1*el} defines a linear weighting scheme with a slope of 0.1.
 
-The Fortran 90 versions of \code{twdtw} typically outperform the C++ version.
-Additionally, the '\code{f90goto}' version, which utilizes \code{goto} statements,
-tends to be slightly faster than the '\code{f90}' version, which uses only while and for loops.
+The Fortran 90 versions of \code{twdtw} are usually faster than the C++ version.
+The '\code{f90goto}' version, which uses goto statements, is slightly quicker than the
+'\code{f90}' version that uses while and for loops. You can use the \code{max_elapsed} parameter
+to limit the TWDTW calculation to a maximum elapsed time. This means it will skip
+comparisons between pairs of observations in \code{x} and \code{y} that are far apart in time.
+Be careful, though: if \code{max_elapsed} is set too low, it could change the results.
+It important to try out different settings for your specific problem.
 }
 \examples{
 

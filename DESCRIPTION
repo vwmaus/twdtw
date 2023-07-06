@@ -13,14 +13,15 @@ Authors@R:
     )
 Description: What the package does (one paragraph).
 License: GPL (>= 3)
+URL: https://www.victor-maus.com/twdtw, https://github.com/vwmaus/twdtw
+BugReports: https://github.com/vwmaus/twdtw/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Imports:
     Rcpp,
     dtw,
-    proxy,
-    lubridate
+    proxy
 Suggests:
     readr,
     rbenchmark
