@@ -1,5 +1,4 @@
 library(twdtw)
-library(dtw)
 library(rbenchmark)
 
 n <- 23
@@ -36,7 +35,8 @@ twdtw_call <- function(x = ts_x,
 
 tw_r_fun <- function(x,y) x + 1.0 / (1.0 + exp(-0.1 * (y - 50)))
 
-# Benchmark default TWDTW call
+# Benchmark twdtw versions
+# For the same task the dtw package has an elapsed time between 0.8 - 1.0 in comparison
 benchmark(
   twdtw_f90        = twdtw_call(version = 'f90'),
   twdtw_f90_fun    = twdtw_call(version = 'f90', time_weight = tw_r_fun),
@@ -46,7 +46,6 @@ benchmark(
   twdtw_f90_fun_lb = twdtw_call(version = 'f90', max_elapsed = 30, time_weight = tw_r_fun),
   twdtw_f90goto_lb = twdtw_call(version = 'f90goto', max_elapsed = 30),
   twdtw_cpp_lb     = twdtw_call(version = 'cpp', max_elapsed = 30),
-  dtw_cpp          = dtw(ts_x[,c(2,2:4)], ts_y[,c(2,2:4)], distance.only = TRUE), # does not support time dimension
   replications = 1000
 )
 

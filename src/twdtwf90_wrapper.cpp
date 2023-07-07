@@ -7,11 +7,11 @@ extern "C" {
 
   double logistic_tw(double* DIST, double* TD, double* TW1, double* TW2);
 
-  void twdtwf90gt_(double* XM, double* YM, double* CM, int* DM, int* VM, int* SM,
-                   int* N, int* M, int* D, int* NS, double* TW, double* LB, int* JB, double* CL);
+  void twdtwf90gt_(double* XM, double* YM, double* CM, int* DM, int* VM,
+                   int* N, int* M, int* D, double* TW, double* LB, int* JB, double* CL);
 
-  void twdtwf90(double* XM, double* YM, double* CM, int* DM, int* VM, int* SM,
-                int* N, int* M, int* D, int* NS, double* TW, double* LB, int* JB,
+  void twdtwf90(double* XM, double* YM, double* CM, int* DM, int* VM,
+                int* N, int* M, int* D, double* TW, double* LB, int* JB,
                 double* CL, double (*callback_func)(double*, double*, double*, double*));
 }
 
@@ -45,15 +45,15 @@ extern "C" double callback_bridge(double* x, double* y, double* z, double* w) {
 // Wrapper Fortran functions
 // [[Rcpp::export]]
 void twdtw_f90gt(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatrix DM,
-                 IntegerMatrix VM, IntegerMatrix SM, int N, int M, int D, int NS,
+                 IntegerMatrix VM, int N, int M, int D,
                  NumericVector TW, double LB, IntegerVector JB, double CL) {
-  twdtwf90gt_(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(), SM.begin(),
-              &N, &M, &D, &NS, TW.begin(), &LB, JB.begin(), &CL);
+  twdtwf90gt_(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(),
+              &N, &M, &D, TW.begin(), &LB, JB.begin(), &CL);
 }
 
 // [[Rcpp::export]]
 void twdtw_f90(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatrix DM,
-               IntegerMatrix VM, IntegerMatrix SM, int N, int M, int D, int NS,
+               IntegerMatrix VM, int N, int M, int D,
                NumericVector TW, double LB, IntegerVector JB, double CL,
                Rcpp::Nullable<Rcpp::Function> tw_r_fun = R_NilValue) {
 
@@ -68,14 +68,14 @@ void twdtw_f90(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatr
 
   if (is_tw_r_fun_null) {
     // TW is NULL, handle this situation
-    twdtwf90(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(), SM.begin(),
-             &N, &M, &D, &NS, TW.begin(), &LB, JB.begin(), &CL, logistic_tw);
+    twdtwf90(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(),
+             &N, &M, &D, TW.begin(), &LB, JB.begin(), &CL, logistic_tw);
   } else {
     Function tw_r_fun_func(tw_r_fun);
     // Allocate the CallbackFuncObject on heap
     gCallbackFuncObject = new CallbackFuncObject(tw_r_fun_func);
-    twdtwf90(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(), SM.begin(),
-             &N, &M, &D, &NS, TW.begin(), &LB, JB.begin(), &CL, callback_bridge);
+    twdtwf90(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(),
+             &N, &M, &D, TW.begin(), &LB, JB.begin(), &CL, callback_bridge);
 
     // Delete the CallbackFuncObject immediately after using it
     delete gCallbackFuncObject;

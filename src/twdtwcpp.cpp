@@ -29,11 +29,9 @@ double logistic_tw_cpp(double DIST, double TD, double TW1, double TW2) {
  * @param CM   Output cumulative cost matrix
  * @param DM   Direction matrix
  * @param VM   Starting points matrix
- * @param SM   Matrix of step patterns
  * @param N    Number of rows in CM, DM, and VM - time series
  * @param M    Number of columns CM, DM, and VM - temporal profile
  * @param D    Number of spectral dimensions including time in XM and YM
- * @param NS   Number of rows in SM
  * @param TW   Time-Weight parameters alpha and beta
  * @param LB   Constrain TWDTW calculation to band given by TW(2)
  * @param JB   Output array of starting points
@@ -41,17 +39,16 @@ double logistic_tw_cpp(double DIST, double TD, double TW1, double TW2) {
  */
 // [[Rcpp::export]]
 void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& CM, IntegerMatrix& DM, IntegerMatrix& VM,
-               const IntegerMatrix& SM, int N, int M, int D, int NS, const NumericVector& TW, double LB, IntegerVector& JB, double CL) {
+               int N, int M, int D, const NumericVector& TW, double LB, IntegerVector& JB, double CL) {
   const double INF = std::numeric_limits<double>::infinity();
   const int ZERO = 0;
   const int ONE = 1;
 
-  NumericVector CP(NS);
-  int JM = 0, ILMIN, JLMIN;
-  IntegerVector IL(NS), JL(NS);
+  int JM = 0;
 
   // Initialize VM matrix
-  VM(0, 0) = 1;
+  VM(0, 0) = 1; // R index
+  VM(0, 1) = 2; // R index
 
   // Initialize the first row and column of the matrices
   for (int I = 1; I <= N; ++I) {
@@ -66,23 +63,12 @@ void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& 
     VM(I, 0) = 1;
   }
 
-  for (int J = 1; J < M; ++J) {
-    double TD = std::fabs(YM(0, 0) - XM(J, 0));
-    TD = std::min(TD, CL - TD);
-    double DIST = 0.0;
-    for (int K = 1; K < D; ++K) {
-      DIST += std::pow(YM(0, K) - XM(J, K), 2);
-    }
-    CM(1, J) = CM(1, J-1) + sqrt(DIST) + 1.0 / (1.0 + std::exp(-TW[0] * (TD - TW[1])));
-    //Rcpp::Rcout << "DIST: " << CM(1, J) << std::endl;
-    DM(0, J) = 2;
-    VM(1, J) = J + 1;
-  }
 
   // Compute cumulative cost matrix
   int J = 2;
   while (J <= M) {
-    int I = 3;
+    VM(0,J) = J + 1;
+    int I = 2;
     while (I <= N + 1) {
       double TD = std::fabs(YM(I - 2, 0) - XM(J - 1, 0));
       TD = std::min(TD, CL - TD);
@@ -95,37 +81,24 @@ void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& 
         for (int K = 1; K < D; ++K) {
           DIST += std::pow(YM(I - 2, K) - XM(J - 1, K), 2);
         }
-        CM(I - 1, J - 1) = sqrt(DIST) + 1.0 / (1.0 + std::exp(-TW[0] * (TD - TW[1])));
-      }
-      CP.fill(NA_REAL);
-      for (int K = 0; K < NS; ++K) {
-        int PK = SM(K, 0);
-        IL(K) = I - SM(K, 1);
-        JL(K) = J - SM(K, 2);
-        if (IL(K) > ZERO && JL(K) > ZERO) {
-          double W = SM(K, 3);
-          if (W == -ONE) {
-            CP(PK - 1) = CM(IL(K) - 1, JL(K) - 1);
-          } else {
-            CP(PK - 1) += CM(IL(K) - 1, JL(K) - 1) * W;
-          }
+        double CP = sqrt(DIST) + 1.0 / (1.0 + std::exp(-TW[0] * (TD - TW[1])));
+        CM(I - 1, J - 1) = CP + CM(I - 2, J - 2);
+        DM(I - 1, J - 1) = ONE;
+        VM(I - 1, J - 1) = VM(I - 2, J - 2);
+
+        double ST = CP + CM(I - 1, J - 2);
+        if (ST < CM(I - 1, J - 1)) {
+          DM(I - 1, J - 1) = 2;
+          CM(I - 1, J - 1) = ST;
+          VM(I - 1, J - 1) = VM(I - 1, J - 2);
         }
-      }
-      int KMIN = -ONE;
-      double VMIN = INF;
-      for (int K = 0; K < NS; ++K) {
-        int PK = SM(K, 0);
-        if (std::isfinite(CP(PK - 1)) && CP(PK - 1) < VMIN) {
-          KMIN = PK;
-          VMIN = CP(PK - 1);
-          ILMIN = IL(K);
-          JLMIN = JL(K);
+
+        ST = CP + CM(I - 2, J - 1);
+        if (ST < CM(I - 1, J - 1)){
+            DM(I - 1, J - 1) = 3;
+            CM(I - 1, J - 1) = ST;
+            VM(I - 1, J - 1) = VM(I - 2, J - 1);
         }
-      }
-      if (KMIN > -ONE) {
-        CM(I - 1, J - 1) = VMIN;
-        DM(I - 1, J - 1) = KMIN;
-        VM(I - 1, J - 1) = VM(ILMIN - 1, JLMIN - 1);
       }
       ++I;
     }

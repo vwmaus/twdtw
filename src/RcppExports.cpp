@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // twdtw_cpp
-void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& CM, IntegerMatrix& DM, IntegerMatrix& VM, const IntegerMatrix& SM, int N, int M, int D, int NS, const NumericVector& TW, double LB, IntegerVector& JB, double CL);
-RcppExport SEXP _twdtw_twdtw_cpp(SEXP XMSEXP, SEXP YMSEXP, SEXP CMSEXP, SEXP DMSEXP, SEXP VMSEXP, SEXP SMSEXP, SEXP NSEXP, SEXP MSEXP, SEXP DSEXP, SEXP NSSEXP, SEXP TWSEXP, SEXP LBSEXP, SEXP JBSEXP, SEXP CLSEXP) {
+void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& CM, IntegerMatrix& DM, IntegerMatrix& VM, int N, int M, int D, const NumericVector& TW, double LB, IntegerVector& JB, double CL);
+RcppExport SEXP _twdtw_twdtw_cpp(SEXP XMSEXP, SEXP YMSEXP, SEXP CMSEXP, SEXP DMSEXP, SEXP VMSEXP, SEXP NSEXP, SEXP MSEXP, SEXP DSEXP, SEXP TWSEXP, SEXP LBSEXP, SEXP JBSEXP, SEXP CLSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type XM(XMSEXP);
@@ -20,22 +20,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix& >::type CM(CMSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix& >::type DM(DMSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix& >::type VM(VMSEXP);
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type SM(SMSEXP);
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< int >::type M(MSEXP);
     Rcpp::traits::input_parameter< int >::type D(DSEXP);
-    Rcpp::traits::input_parameter< int >::type NS(NSSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type TW(TWSEXP);
     Rcpp::traits::input_parameter< double >::type LB(LBSEXP);
     Rcpp::traits::input_parameter< IntegerVector& >::type JB(JBSEXP);
     Rcpp::traits::input_parameter< double >::type CL(CLSEXP);
-    twdtw_cpp(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL);
+    twdtw_cpp(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL);
     return R_NilValue;
 END_RCPP
 }
 // twdtw_f90gt
-void twdtw_f90gt(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatrix DM, IntegerMatrix VM, IntegerMatrix SM, int N, int M, int D, int NS, NumericVector TW, double LB, IntegerVector JB, double CL);
-RcppExport SEXP _twdtw_twdtw_f90gt(SEXP XMSEXP, SEXP YMSEXP, SEXP CMSEXP, SEXP DMSEXP, SEXP VMSEXP, SEXP SMSEXP, SEXP NSEXP, SEXP MSEXP, SEXP DSEXP, SEXP NSSEXP, SEXP TWSEXP, SEXP LBSEXP, SEXP JBSEXP, SEXP CLSEXP) {
+void twdtw_f90gt(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatrix DM, IntegerMatrix VM, int N, int M, int D, NumericVector TW, double LB, IntegerVector JB, double CL);
+RcppExport SEXP _twdtw_twdtw_f90gt(SEXP XMSEXP, SEXP YMSEXP, SEXP CMSEXP, SEXP DMSEXP, SEXP VMSEXP, SEXP NSEXP, SEXP MSEXP, SEXP DSEXP, SEXP TWSEXP, SEXP LBSEXP, SEXP JBSEXP, SEXP CLSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type XM(XMSEXP);
@@ -43,22 +41,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type CM(CMSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix >::type DM(DMSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix >::type VM(VMSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type SM(SMSEXP);
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< int >::type M(MSEXP);
     Rcpp::traits::input_parameter< int >::type D(DSEXP);
-    Rcpp::traits::input_parameter< int >::type NS(NSSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type TW(TWSEXP);
     Rcpp::traits::input_parameter< double >::type LB(LBSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type JB(JBSEXP);
     Rcpp::traits::input_parameter< double >::type CL(CLSEXP);
-    twdtw_f90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL);
+    twdtw_f90gt(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL);
     return R_NilValue;
 END_RCPP
 }
 // twdtw_f90
-void twdtw_f90(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatrix DM, IntegerMatrix VM, IntegerMatrix SM, int N, int M, int D, int NS, NumericVector TW, double LB, IntegerVector JB, double CL, Rcpp::Nullable<Rcpp::Function> tw_r_fun);
-RcppExport SEXP _twdtw_twdtw_f90(SEXP XMSEXP, SEXP YMSEXP, SEXP CMSEXP, SEXP DMSEXP, SEXP VMSEXP, SEXP SMSEXP, SEXP NSEXP, SEXP MSEXP, SEXP DSEXP, SEXP NSSEXP, SEXP TWSEXP, SEXP LBSEXP, SEXP JBSEXP, SEXP CLSEXP, SEXP tw_r_funSEXP) {
+void twdtw_f90(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatrix DM, IntegerMatrix VM, int N, int M, int D, NumericVector TW, double LB, IntegerVector JB, double CL, Rcpp::Nullable<Rcpp::Function> tw_r_fun);
+RcppExport SEXP _twdtw_twdtw_f90(SEXP XMSEXP, SEXP YMSEXP, SEXP CMSEXP, SEXP DMSEXP, SEXP VMSEXP, SEXP NSEXP, SEXP MSEXP, SEXP DSEXP, SEXP TWSEXP, SEXP LBSEXP, SEXP JBSEXP, SEXP CLSEXP, SEXP tw_r_funSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type XM(XMSEXP);
@@ -66,25 +62,23 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type CM(CMSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix >::type DM(DMSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix >::type VM(VMSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type SM(SMSEXP);
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< int >::type M(MSEXP);
     Rcpp::traits::input_parameter< int >::type D(DSEXP);
-    Rcpp::traits::input_parameter< int >::type NS(NSSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type TW(TWSEXP);
     Rcpp::traits::input_parameter< double >::type LB(LBSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type JB(JBSEXP);
     Rcpp::traits::input_parameter< double >::type CL(CLSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::Function> >::type tw_r_fun(tw_r_funSEXP);
-    twdtw_f90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL, tw_r_fun);
+    twdtw_f90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, tw_r_fun);
     return R_NilValue;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_twdtw_twdtw_cpp", (DL_FUNC) &_twdtw_twdtw_cpp, 14},
-    {"_twdtw_twdtw_f90gt", (DL_FUNC) &_twdtw_twdtw_f90gt, 14},
-    {"_twdtw_twdtw_f90", (DL_FUNC) &_twdtw_twdtw_f90, 15},
+    {"_twdtw_twdtw_cpp", (DL_FUNC) &_twdtw_twdtw_cpp, 12},
+    {"_twdtw_twdtw_f90gt", (DL_FUNC) &_twdtw_twdtw_f90gt, 12},
+    {"_twdtw_twdtw_f90", (DL_FUNC) &_twdtw_twdtw_f90, 13},
     {NULL, NULL, 0}
 };
 

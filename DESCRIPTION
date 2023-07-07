@@ -23,7 +23,8 @@ Imports:
     proxy
 Suggests:
     readr,
-    rbenchmark
+    rbenchmark,
+    testthat (>= 3.0.0)
 LinkingTo: Rcpp
 Collate: 
     'RcppExports.R'
@@ -31,3 +32,4 @@ Collate:
     'init.R'
     'twdtw.R'
     'zzz.R'
+Config/testthat/edition: 3

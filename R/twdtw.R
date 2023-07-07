@@ -248,12 +248,6 @@ twdtw.matrix <- function(x, y,
   DM <- matrix(0L, nrow = N+1, ncol = M)
   VM <- matrix(0L, nrow = N+1, ncol = M)
   JB <- as.integer(rep(0, N))
-  SM <- matrix(as.integer(
-    c(1, 1, 2, 2, 3, 3,
-    1, 0, 0, 0, 1, 0,
-    1, 0, 1, 0, 0, 0,
-    -1, 1,-1, 1,-1, 1)), nrow = 6, byrow = FALSE)
-  NS <- as.integer(nrow(SM))
   CL <- as.double(cycle_length)
   LB <- as.double(max_elapsed)
   if (is.function(time_weight)){
@@ -268,7 +262,7 @@ twdtw.matrix <- function(x, y,
               'twdtw_cpp')[version == c('f90', 'f90goto', 'cpp')])
 
   # Prepare arguments
-  args <- list(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
+  args <- list(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL)
   if (version == 'f90' & is.function(time_weight)){
     args$tw_r <- time_weight
   }
@@ -280,7 +274,9 @@ twdtw.matrix <- function(x, y,
   switch (output,
     'distance' = min(CM[-1,,drop=FALSE][N,b]),
     'matches' = matrix(c(VM[-1,,drop=FALSE][N,b], b, CM[-1,,drop=FALSE][N,b]), ncol = 3, byrow = F),
-    'internals' = list(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
+    'internals' = list(XM = XM, YM = YM, CM = CM, DM = DM,
+                       VM = VM, N = N, M = M, D = D,
+                       TW = TW, LB = LB, JB = JB, CL = CL)
   )
 
 }

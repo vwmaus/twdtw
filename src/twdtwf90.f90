@@ -25,16 +25,14 @@ end function logistic_tw
 ! CM - Output cumulative cost matrix
 ! DM - Direction matrix
 ! VM - Starting points matrix
-! SM - Matrix of step patterns
 ! N  - Number of rows in CM, DM, and VM - time series
 ! M  - Number of columns CM, DM, and VM - temporal profile
 ! D  - Number of spectral dimensions including time in XM and YM
-! NS - Number of rows in SM
 ! TW - Time-Weight parameters alpha and beta
 ! LB - Constrain TWDTW calculation to band given a maximum elapsed time
 ! CL - The length of the time cycle
 ! callback_func - A time-weight fucntion
-subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL, callback_func) bind(C, name = "twdtwf90")
+subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) bind(C, name = "twdtwf90")
   use, intrinsic :: ieee_arithmetic
   use iso_c_binding
   implicit none
@@ -48,14 +46,13 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL, callbac
   end interface
 
   ! I/O Variables
-  integer, intent(in) :: N, M, D, NS
-  integer, intent(in) :: SM(NS,4)
+  integer, intent(in) :: N, M, D
   integer, intent(out) :: DM(N+1,M), VM(N+1,M), JB(N)
   double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB, CL
   double precision, intent(out) :: CM(N+1,M)
   ! Internals
-  double precision :: W, CP(NS), VMIN, A, B, TD, DIST
-  integer :: I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO=0, ONE=1, JM, JLMIN, ILMIN, VM_value
+  double precision :: W, CP, ST, A, B, TD, DIST
+  integer :: I, J, K, ZERO=0, ONE=1, JM, VM_value
   double precision :: NAN, INF
   NAN = ieee_value(0.0, ieee_quiet_nan)
   INF = ieee_value(0.0, ieee_positive_inf)
@@ -76,23 +73,11 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL, callbac
     VM(I,1) = 1
   end do
 
-  do J = 2, M
-    TD = abs(YM(1,1) - XM(J,1))
-    TD = min(TD, CL - TD)
-    DIST = 0.0
-    do K = 2, D
-      DIST = DIST + (YM(1,K) - XM(J,K))**2
-    end do
-    CM(2,J) = CM(2,J-1) + callback_func(sqrt(DIST), TD, TW(1), TW(2))
-    !WRITE(*, *) "DIST:", CM(2,J)
-    DM(1,J) = 2
-    VM(2,J) = J
-  end do
-
   ! Compute cumulative cost matrix
   J = 2
   do while ( J .le. M )
-    I = 3
+    VM(1,J) = J
+    I = 2
     do while ( I .le. N+1 )
       ! Calculate local distance
       ! the call takes I-1 because local matrix has an additional row at the beginning
@@ -108,38 +93,25 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL, callbac
         do K = 2, D
           DIST = DIST + (YM(I-1,K) - XM(J,K))**2
         end do
-        CM(I,J) = callback_func(sqrt(DIST), TD, TW(1), TW(2))
-      end if
-      ! Initialize list of step cost
-      CP(:) = NAN
-      do K = 1, NS
-        PK = SM(K,1)
-        IL(K) = I - SM(K,2)
-        JL(K) = J - SM(K,3)
-        if ((IL(K).gt.ZERO).and.(JL(K).gt.ZERO)) then
-          W = SM(K,4)
-          if (W.eq.-ONE) then
-            CP(PK) = CM(IL(K),JL(K))
-          else
-            CP(PK) = CP(PK) + CM(IL(K),JL(K))*W
-          end if
-        end if
-      end do
-      KMIN = -ONE
-      VMIN = INF
-      do K = 1, NS
-        PK = SM(K,1)
-        if (CP(PK).eq.CP(PK).and.CP(PK).lt.VMIN) then
-          KMIN = PK
-          VMIN = CP(PK)
-          ILMIN = IL(K)
-          JLMIN = JL(K)
-        end if
-      end do
-      if (KMIN.gt.-ONE) then
-        CM(I,J) = VMIN
-        DM(I,J) = KMIN
-        VM(I,J) = VM(ILMIN, JLMIN)
+        CP = callback_func(sqrt(DIST), TD, TW(1), TW(2))
+        CM(I, J) = CP + CM(I - 1, J - 1)
+        DM(I,J) = ONE
+        VM(I,J) = VM(I - 1, J - 1)
+
+        ST = CP + CM(I    , J - 1)
+        if (ST < CM(I, J)) then
+              DM(I,J) = 2
+              CM(I, J) = ST
+              VM(I,J) = VM(I, J - 1)
+        endif
+
+        ST = CP + CM(I - 1, J    )
+        if (ST < CM(I, J)) then
+              DM(I,J) = 3
+              CM(I, J) = ST
+              VM(I,J) = VM(I - 1, J)
+        endif
+
       end if
       I = I + 1
     end do
@@ -173,26 +145,23 @@ end subroutine twdtwf90
 ! CM - Output cumulative cost matrix
 ! DM - Direction matrix
 ! VM - Starting points matrix
-! SM - Matrix of step patterns
 ! N  - Number of rows in CM, DM, and VM - time series
 ! M  - Number of columns CM, DM, and VM - temporal profile
 ! D  - Number of spectral dimensions including time in XM and YM
-! NS - Number of rows in SM
 ! TW - Time-Weight parameters alpha and beta
 ! LB - Constrain TWDTW calculation to band given by a maximum elapsed time
-subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
+subroutine twdtwf90gt(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL)
   use, intrinsic :: ieee_arithmetic
   implicit none
-  integer, intent(in) :: N, M, D, NS
-  integer :: SM(NS,4), DM(N+1,M), VM(N+1,M), JB(N)
+  integer, intent(in) :: N, M, D
+  integer :: DM(N+1,M), VM(N+1,M), JB(N)
   double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB, CL
-  double precision :: CM(N+1,M), W, CP(NS), VMIN, A, B, TD, DIST
-  integer :: I, J, IL(NS), JL(NS), K, PK, KMIN, ZERO, ONE, JM, ILMIN, JLMIN, IML, VM_value
+  double precision :: CM(N+1,M), CP, ST, A, B, TD, DIST
+  integer :: I, J, K, ZERO, ONE, JM, VM_value
   parameter(ZERO=0, ONE=1)
   double precision :: NAN, INF
   NAN = ieee_value(0.0, ieee_quiet_nan)
   INF = ieee_value(0.0, ieee_positive_inf)
-  IML = 1
   VM(1,1) = 1
 
   ! Initialize the first row and column of the matrices
@@ -208,76 +177,46 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
      VM(I,1) = 1
 21 continue
 
-  do 31 J = 2, M
-     TD = abs(YM(1,1) - XM(J,1))
-     TD = min(TD, CL - TD)
-     DIST = 0.0
-     do K = 2, D
-       DIST = DIST + (YM(1,K) - XM(J,K))**2
-     end do
-     CM(2,J) = CM(2,J-1) + sqrt(DIST) + 1.0 / (1.0 + exp(-TW(1) * (TD - TW(2))))
-     DM(1,J) = 2
-     VM(2,J) = J
-31 continue
-
   ! Compute cumulative cost matrix
   J = 2
   do 32 while (J .le. M)
-     I = 3
+     VM(1,J) = J
+     I = 2
      do 22 while (I .le. N+1)
+
         TD = abs(YM(I-1,1) - XM(J,1))
         TD = min(TD, CL - TD)
+
         if (TD.gt.LB) then
-           CM(I,J) = INF
+           CM(I,J) =  INF
            DM(I,J) = -ONE
            VM(I,J) = ZERO
            goto 44
-        else
-           DIST = 0.0
-           do K = 2, D
-             DIST = DIST + (YM(I-1,K) - XM(J,K))**2
-           end do
-           CM(I,J) = sqrt(DIST) + 1.0 / (1.0 + exp(-TW(1) * (TD - TW(2))))
         endif
 
-        ! Initialize list of step cost
-        do 10 K = 1, NS
-           CP(K) = NAN
-10    continue
+        DIST = 0.0
+        do K = 2, D
+          DIST = DIST + (YM(I-1,K) - XM(J,K))**2
+        end do
+        CP = sqrt(DIST) + 1.0 / (1.0 + exp(-TW(1) * (TD - TW(2))))
+        CM(I, J) = CP + CM(I - 1, J - 1)
+        DM(I,J) = ONE
+        VM(I,J) = VM(I - 1, J - 1)
 
-        do 11 K = 1, NS
-           PK = SM(K,1)
-           IL(K) = I - SM(K,2)
-           JL(K) = J - SM(K,3)
-           if ((IL(K) > ZERO) .and. (JL(K) > ZERO)) then
-              W = SM(K,4)
-              if (W .eq. -ONE) then
-                 CP(PK) = CM(IL(K),JL(K))
-              else
-                 CP(PK) = CP(PK) + CM(IL(K),JL(K)) * W
-              endif
-           endif
-11    continue
-
-        KMIN = -ONE
-        VMIN = INF
-        ILMIN = -ONE
-        JLMIN = -ONE
-        do 12 K = 1, NS
-           PK = SM(K,1)
-           if ((CP(PK) == CP(PK)) .and. (CP(PK) < VMIN)) then
-              KMIN = PK
-              VMIN = CP(PK)
-              ILMIN = IL(K)
-              JLMIN = JL(K)
-           endif
-12    continue
-
-        if (KMIN > -ONE) then
-           CM(I,J) = VMIN
-           DM(I,J) = KMIN
-           VM(I,J) = VM(ILMIN, JLMIN)
+        ST = CP + CM(I    , J - 1)
+        if (ST < CM(I, J)) then
+              DM(I,J) = 2
+              CM(I, J) = ST
+              VM(I,J) = VM(I, J - 1)
         endif
+
+        ST = CP + CM(I - 1, J    )
+        if (ST < CM(I, J)) then
+              DM(I,J) = 3
+              CM(I, J) = ST
+              VM(I,J) = VM(I - 1, J)
+        endif
+
 44    continue
         I = I + 1
 22    continue
