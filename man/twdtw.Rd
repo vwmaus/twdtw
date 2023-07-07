@@ -15,7 +15,6 @@ twdtw(x, y, time_weight, cycle_length, time_scale, ...)
   cycle_length,
   time_scale,
   index_column = "time",
-  dtw_step_matrix = symmetric1,
   max_elapsed = Inf,
   output = "distance",
   version = "f90",
@@ -29,7 +28,6 @@ twdtw(x, y, time_weight, cycle_length, time_scale, ...)
   cycle_length,
   time_scale = NULL,
   index_column = 1,
-  dtw_step_matrix = symmetric1,
   max_elapsed = Inf,
   output = "distance",
   version = "f90",
@@ -55,8 +53,6 @@ which is a division of the \code{cycle_length}. If \code{cycle_length} is "year"
 
 \item{index_column}{(optional) The column name of the time index for data.frame inputs. Defaults to "time".
 For matrix input, an integer indicating the column with the time index. Defaults to 1.}
-
-\item{dtw_step_matrix}{A matrix specifying the step pattern for the DTW algorithm. Defaults to \code{\link[dtw]{symmetric1}}.}
 
 \item{max_elapsed}{Numeric value constraining the TWDTW calculation to the lower band given by a maximum elapsed time. Defaults to Inf.}
 

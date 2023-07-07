@@ -14,7 +14,6 @@
 #' "hour", "minute", "second", and so on. It can also receive a numeric value when \code{cycle_length} is numeric.
 #' @param index_column (optional) The column name of the time index for data.frame inputs. Defaults to "time".
 #' For matrix input, an integer indicating the column with the time index. Defaults to 1.
-#' @param dtw_step_matrix A matrix specifying the step pattern for the DTW algorithm. Defaults to \code{\link[dtw]{symmetric1}}.
 #' @param max_elapsed Numeric value constraining the TWDTW calculation to the lower band given by a maximum elapsed time. Defaults to Inf.
 #' @param output A character string defining the output. It must be one of 'distance', 'matches', 'internals'. Defaults to 'distance'.
 #' 'distance' will return the lowest TWDTW distance between \code{x} and \code{y}.
@@ -133,7 +132,6 @@ twdtw.data.frame <- function(x, y,
                              cycle_length,
                              time_scale,
                              index_column = 'time',
-                             dtw_step_matrix = symmetric1,
                              max_elapsed = Inf,
                              output = 'distance',
                              version = 'f90', ...) {
@@ -173,7 +171,6 @@ twdtw.data.frame <- function(x, y,
         cycle_length = cycle_length,
         time_scale = time_scale,
         index_column = 1,
-        dtw_step_matrix = dtw_step_matrix,
         max_elapsed = max_elapsed,
         output = output,
         version = version)
@@ -186,7 +183,6 @@ twdtw.matrix <- function(x, y,
                          cycle_length,
                          time_scale = NULL,
                          index_column = 1,
-                         dtw_step_matrix = symmetric1,
                          max_elapsed = Inf,
                          output = 'distance',
                          version = 'f90', ...) {
@@ -220,14 +216,13 @@ twdtw.matrix <- function(x, y,
   y <- y[, new_order, drop = FALSE]
 
   # X and Y should not contain NAs
-  x <- na.omit(x)
-  y <- na.omit(y)
+  x <- x[complete.cases(x),,drop=FALSE]
+  y <- y[complete.cases(y),,drop=FALSE]
 
   # call .twdtw function
   .twdtw(x = x,
          y = y,
          time_weight = time_weight,
-         dtw_step_matrix = dtw_step_matrix,
          cycle_length = cycle_length,
          max_elapsed = max_elapsed,
          output = output,
@@ -239,7 +234,6 @@ twdtw.matrix <- function(x, y,
 .twdtw <- function(x, y,
                    time_weight,
                    cycle_length,
-                   dtw_step_matrix = symmetric1,
                    max_elapsed = Inf,
                    output = 'distance',
                    version = 'f90', ...) {
@@ -248,13 +242,17 @@ twdtw.matrix <- function(x, y,
   N <- as.integer(nrow(y))
   M <- as.integer(nrow(x))
   D <- as.integer(ncol(y))
-  XM <- matrix(as.double(as.matrix(x)), N, D)
+  XM <- matrix(as.double(as.matrix(x)), M, D)
   YM <- matrix(as.double(as.matrix(y)), N, D)
   CM <- matrix(0, nrow = N+1, ncol = M)
   DM <- matrix(0L, nrow = N+1, ncol = M)
   VM <- matrix(0L, nrow = N+1, ncol = M)
   JB <- as.integer(rep(0, N))
-  SM <- matrix(as.integer(dtw_step_matrix), nrow(dtw_step_matrix), ncol(dtw_step_matrix))
+  SM <- matrix(as.integer(
+    c(1, 1, 2, 2, 3, 3,
+    1, 0, 0, 0, 1, 0,
+    1, 0, 1, 0, 0, 0,
+    -1, 1,-1, 1,-1, 1)), nrow = 6, byrow = FALSE)
   NS <- as.integer(nrow(SM))
   CL <- as.double(cycle_length)
   LB <- as.double(max_elapsed)
@@ -280,8 +278,8 @@ twdtw.matrix <- function(x, y,
   b <- JB[JB!=0]
 
   switch (output,
-    'distance' = min(CM[-1,][N,b]),
-    'matches' = matrix(c(VM[-1,][N,b], b, CM[-1,][N,b]), ncol = 3, byrow = F),
+    'distance' = min(CM[-1,,drop=FALSE][N,b]),
+    'matches' = matrix(c(VM[-1,,drop=FALSE][N,b], b, CM[-1,,drop=FALSE][N,b]), ncol = 3, byrow = F),
     'internals' = list(XM, YM, CM, DM, VM, SM, N, M, D, NS, TW, LB, JB, CL)
   )
 
