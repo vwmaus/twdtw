@@ -48,7 +48,6 @@ void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& 
 
   // Initialize VM matrix
   VM(0, 0) = 1; // R index
-  VM(0, 1) = 2; // R index
 
   // Initialize the first row and column of the matrices
   for (int I = 1; I <= N; ++I) {
@@ -67,7 +66,7 @@ void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& 
   // Compute cumulative cost matrix
   int J = 2;
   while (J <= M) {
-    VM(0,J) = J + 1;
+    VM(0,J-1) = J + 1;
     int I = 2;
     while (I <= N + 1) {
       double TD = std::fabs(YM(I - 2, 0) - XM(J - 1, 0));
