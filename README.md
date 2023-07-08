@@ -3,8 +3,8 @@
 [![R-CMD-check](https://github.com/vwmaus/twdtw/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/vwmaus/twdtw/actions/workflows/R-CMD-check.yaml)
 [![Coverage Status](https://img.shields.io/codecov/c/github/vwmaus/twdtw/main.svg)](https://app.codecov.io/gh/vwmaus/twdtw)
 [![CRAN](http://www.r-pkg.org/badges/version/twdtw)](https://cran.r-project.org/package=twdtw)
-<!-- [![cran checks](https://badges.cranchecks.info/worst/twdtw.svg)](https://cran.r-project.org/web/checks/check_results_twdtw.html) -->
 [![Downloads](http://cranlogs.r-pkg.org/badges/twdtw?color=brightgreen)](http://www.r-pkg.org/pkg/twdtw)
+<!-- [![cran checks](https://badges.cranchecks.info/worst/twdtw.svg)](https://cran.r-project.org/web/checks/check_results_twdtw.html) -->
 <!-- badges: end -->
   
 # twdtw
