@@ -15,9 +15,6 @@ extern "C" {
                 double* CL, double (*callback_func)(double*, double*, double*, double*));
 }
 
-// Define the callback function pointer type for time weight function
-typedef double (*CallbackFunc)(double*, double*, double*, double*);
-
 // Define a function object for the callback function
 struct CallbackFuncObject {
   Function tw_r_fun;
@@ -25,7 +22,8 @@ struct CallbackFuncObject {
   CallbackFuncObject(Function input_tw_r_fun) : tw_r_fun(input_tw_r_fun) {}
 
   double call(double* x, double* y, double* z, double* w) const {
-    // Regardless of z and w, we always call the R function with x and y
+    // Regardless of z and w, always call the R function with x and y
+    // z and w are placeholders for the parameter of the default logistic time weight
     NumericVector result = tw_r_fun(*x, *y);
     return result[0];  // Extract the first element as the result
   }
@@ -67,12 +65,12 @@ void twdtw_f90(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatr
   }
 
   if (is_tw_r_fun_null) {
-    // TW is NULL, handle this situation
+    // Call default logistic time weight
     twdtwf90(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(),
              &N, &M, &D, TW.begin(), &LB, JB.begin(), &CL, logistic_tw);
   } else {
     Function tw_r_fun_func(tw_r_fun);
-    // Allocate the CallbackFuncObject on heap
+    // Allocate the CallbackFuncObject on heap to call defined R function
     gCallbackFuncObject = new CallbackFuncObject(tw_r_fun_func);
     twdtwf90(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(),
              &N, &M, &D, TW.begin(), &LB, JB.begin(), &CL, callback_bridge);
