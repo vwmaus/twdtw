@@ -11,12 +11,17 @@
 ! Returns:
 ! A double precision value that is the result of applying the logistic transformation on DIST and TD
 ! using the weights TW1 and TW2.
-double precision function logistic_tw(DIST, TD, TW1, TW2) bind(C, name = "logistic_tw")
+function logistic_tw(DIST, TD, TW1, TW2) bind(C, name="logistic_tw") result(logistic_tw)
   use iso_c_binding
   implicit none
-  double precision, intent(in) :: DIST, TD, TW1, TW2
-  logistic_tw = DIST + 1.0 / (1.0 + exp(-TW1 * (TD - TW2)))
+  real(c_double), intent(in) :: DIST, TD, TW1, TW2
+  real(c_double) :: logistic_tw
+  logistic_tw = DIST + 1.0d0 / (1.0d0 + exp(-TW1 * (TD - TW2)))
 end function logistic_tw
+
+
+
+
 
 
 ! Computation of TWDTW
@@ -33,7 +38,7 @@ end function logistic_tw
 ! JB - Output array of starting points
 ! CL - The length of the time cycle
 ! callback_func - A time-weight fucntion
-subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) bind(C, name = "twdtwf90")
+subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) bind(C, name="twdtwf90")
   use, intrinsic :: ieee_arithmetic
   use iso_c_binding
   implicit none
@@ -41,23 +46,22 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) 
     function callback_func(x, y, z, w) bind(C)
       use, intrinsic :: iso_c_binding
       implicit none
-      real(C_DOUBLE), intent(in) :: x, y, z, w
-      real(C_DOUBLE) :: callback_func
+      real(c_double), intent(in) :: x, y, z, w
+      real(c_double) :: callback_func
     end function callback_func
   end interface
 
   ! I/O Variables
-  integer, intent(in) :: N, M, D
-  integer, intent(out) :: DM(N+1,M), VM(N+1,M), JB(N)
-  double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB, CL
-  double precision, intent(out) :: CM(N+1,M)
+  integer(c_int), intent(in) :: N, M, D
+  integer(c_int), intent(out) :: DM(N+1,M), VM(N+1,M), JB(N)
+  real(c_double), intent(in) :: XM(M,D), YM(N,D), TW(2), LB, CL
+  real(c_double), intent(out) :: CM(N+1,M)
   ! Internals
-  double precision :: W, CP, ST, A, B, TD, DIST
-  integer :: I, J, K, ZERO=0, ONE=1, JM, VM_value
-  double precision :: NAN, INF
+  real(c_double) :: W, CP, ST, A, B, TD, DIST
+  integer(c_int) :: I, J, K, ZERO=0, ONE=1, JM, VM_value
+  real(c_double) :: NAN, INF
   NAN = ieee_value(0.0, ieee_quiet_nan)
   INF = ieee_value(0.0, ieee_positive_inf)
-
 
   VM(1,1) = 1
 
