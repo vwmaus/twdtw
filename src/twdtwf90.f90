@@ -30,6 +30,7 @@ end function logistic_tw
 ! D  - Number of spectral dimensions including time in XM and YM
 ! TW - Time-Weight parameters alpha and beta
 ! LB - Maximum elapsed time to constrain TWDTW calculation
+! JB - Output array of starting points
 ! CL - The length of the time cycle
 ! callback_func - A time-weight fucntion
 subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) bind(C, name = "twdtwf90")
@@ -149,6 +150,7 @@ end subroutine twdtwf90
 ! D  - Number of spectral dimensions including time in XM and YM
 ! TW - Time-Weight parameters alpha and beta
 ! LB - Maximum elapsed time to constrain TWDTW calculation
+! JB - Output array of starting points
 ! CL - The length of the time cycle
 subroutine twdtwf90gt(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL)
   use, intrinsic :: ieee_arithmetic
