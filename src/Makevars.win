@@ -1,2 +1,1 @@
 PKG_FFLAGS = -std=f2003
-CXX_STD = CXX11
