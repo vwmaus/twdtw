@@ -61,11 +61,10 @@
 #' Be careful, though: if `max_elapsed` is set too low, it could change the results.
 #' It important to try out different settings for your specific problem.
 #'
-#' @return
+#' @return An S3 object twdtw either:
 #' If output = 'distance', a numeric value representing the TWDTW distance between the two time series.
-#' If output = 'matches', a numeric matrix of all TWDTW matches.
-#' For each match the starting index, ending index, and distance are returned.
-#' If output = 'internals' a list of all TWDTW internal data is returned.
+#' If output = 'matches', a numeric matrix of all TWDTW matches. For each match the starting index, ending index, and distance are returned.
+#' If output = 'internals', a list of all TWDTW internal data is returned.
 #'
 #' @references
 #' Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Moura, Y. M. (2016).
@@ -135,6 +134,10 @@ twdtw.data.frame <- function(x, y,
                              max_elapsed = Inf,
                              output = 'distance',
                              version = 'f90', ...) {
+
+  if (!output %in% c('distance', 'matches', 'internals')){
+    stop("Incorrect output. Must be one of 'distance', 'matches', 'internals'")
+  }
 
   # Check that 'x' and 'y' are data.frames
   if (!inherits(y, "data.frame")) {
@@ -271,12 +274,35 @@ twdtw.matrix <- function(x, y,
   do.call(fn, args)
   b <- JB[JB!=0]
 
-  switch (output,
-    'distance' = min(CM[-1,,drop=FALSE][N,b]),
-    'matches' = matrix(c(VM[-1,,drop=FALSE][N,b], b, CM[-1,,drop=FALSE][N,b]), ncol = 3, byrow = F),
-    'internals' = list(XM = XM, YM = YM, CM = CM, DM = DM,
-                       VM = VM, N = N, M = M, D = D,
-                       TW = TW, LB = LB, JB = JB, CL = CL)
-  )
+  if (output == 'distance'){
+    out <- min(CM[-1,,drop=FALSE][N,b])
+  } else {
+    out <- matrix(c(VM[-1,,drop=FALSE][N,b], b, CM[-1,,drop=FALSE][N,b]), ncol = 3, byrow = F)
+    if(output == 'internals'){
+      out <- list(XM = XM, YM = YM, CM = CM, DM = DM,
+                  VM = VM, N = N, M = M, D = D,
+                  TW = TW, LB = LB, JB = JB, CL = CL, matches = out)
+    }
+  }
+
+  class(out) <- "twdtw"
+
+  out
 
 }
+
+#' Print method for twdtw class
+#'
+#' @param x An object of class `twdtw`
+#' @param ... Arguments passed to \code{\link{print.default}} or other methods.
+#' @export
+print.twdtw <- function(x, ...) {
+  if(is.list(x)){
+    print("Iternal twdtw data omited, see names(x)")
+    print("Matches summary:")
+    print(unclass(x$matches), ...)
+  } else {
+    print(unclass(x), ...)
+  }
+}
+

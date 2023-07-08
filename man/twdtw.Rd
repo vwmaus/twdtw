@@ -65,10 +65,10 @@ Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements,
 or 'cpp' for C++ version. Defaults to 'f90'. See details.}
 }
 \value{
+An S3 object twdtw either:
 If output = 'distance', a numeric value representing the TWDTW distance between the two time series.
-If output = 'matches', a numeric matrix of all TWDTW matches.
-For each match the starting index, ending index, and distance are returned.
-If output = 'internals' a list of all TWDTW internal data is returned.
+If output = 'matches', a numeric matrix of all TWDTW matches. For each match the starting index, ending index, and distance are returned.
+If output = 'internals', a list of all TWDTW internal data is returned.
 }
 \description{
 This function calculates the Time-Weighted Dynamic Time Warping (TWDTW) distance between two time series.
