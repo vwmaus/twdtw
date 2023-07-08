@@ -4,8 +4,8 @@
 #' This function calculates the Time-Weighted Dynamic Time Warping (TWDTW) distance between two time series.
 #'
 #' @param x A data.frame or matrix representing time series.
-#' @param y A data.frame or matrix representing a labelled time series (reference).
-#' @param time_weight A numeric vector with lenght two (steepness and midpoint of logistic weight) or a function. See details.
+#' @param y A data.frame or matrix representing a labeled time series (reference).
+#' @param time_weight A numeric vector with length two (steepness and midpoint of logistic weight) or a function. See details.
 #' @param cycle_length A character string or a numeric indicating the larger unit of time.
 #' It must be one of "year", "month", "day", "hour", or "minute". It can also receive a numeric value when \code{time_scale} is numeric.
 #' @param time_scale A character string or numeric indicating the smaller unit of time,

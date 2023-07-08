@@ -44,6 +44,5 @@ plot_cost_matrix <- function(twdtw_obj, ...) {
   cost_matrix <- t(twdtw_obj$CM[-1,])
 
   # Create the plot
-  image(cost_matrix, ..., xlab = "Time Series X", ylab = "Time Series Y", main = "TWDTW Cost Matrix")
-
+  image(cost_matrix, ..., xlab = "Time Series x", ylab = "Time Series y", main = "TWDTW Cost Matrix")
 }
