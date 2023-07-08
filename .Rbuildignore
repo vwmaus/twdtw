@@ -4,3 +4,4 @@
 examples/
 ^revdep$
 ^cran-comments\.md$
+^\.github$
