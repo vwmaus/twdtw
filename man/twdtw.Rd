@@ -156,10 +156,10 @@ twdtw(x, y,
 Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Moura, Y. M. (2016).
 A Time-Weighted Dynamic Time Warping Method for Land-Use and Land-Cover Mapping.
 IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing, 9(8), 3729-3739.
-\url{https://doi.org/10.1109/JSTARS.2016.2517118}
+\doi{10.1109/JSTARS.2016.2517118}
 
 Maus, V., Camara, G., Appel, M., & Pebesma, E. (2019).
 dtwSat: Time-Weighted Dynamic Time Warping for Satellite Image Time Series Analysis in R.
 Journal of Statistical Software, 88(5), 1-31.
-\url{https://doi.org/10.18637/jss.v088.i05}
+\doi{10.18637/jss.v088.i05}
 }
