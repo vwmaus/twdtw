@@ -3,6 +3,11 @@
 # Get the R version
 RVER=`Rscript -e 'cat(paste0(R.version$major,".",R.version$minor), sep="\n")'`
 
+# Create src/Makevars if it does not exist
+if [ ! -f src/Makevars ]; then
+    touch src/Makevars
+fi
+
 # Compare the R version with 3.5.0
 if [ $(echo "$RVER <= 3.5.0" | bc -l) -eq 1 ]
 then
