@@ -22,14 +22,14 @@ end function logistic_tw
 ! Computation of TWDTW
 ! XM - matrix with the time series (N,D)
 ! YM - matrix with the temporal profile (M,D)
-! CM - Output cumulative cost matrix
-! DM - Direction matrix
-! VM - Starting points matrix
-! N  - Number of rows in CM, DM, and VM - time series
-! M  - Number of columns CM, DM, and VM - temporal profile
+! CM - Output cumulative cost matrix (N+1,M)
+! DM - Direction matrix (N+1,M)
+! VM - Starting points matrix (N+1,M)
+! N  - Number of observations in the time series YM
+! M  - Number of observations in the time series XM
 ! D  - Number of spectral dimensions including time in XM and YM
 ! TW - Time-Weight parameters alpha and beta
-! LB - Constrain TWDTW calculation to band given a maximum elapsed time
+! LB - Maximum elapsed time to constrain TWDTW calculation
 ! CL - The length of the time cycle
 ! callback_func - A time-weight fucntion
 subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) bind(C, name = "twdtwf90")
@@ -84,7 +84,6 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) 
       TD = abs(YM(I-1,1) - XM(J,1))
       TD = min(TD, CL - TD)
       if (TD.gt.LB) then
-        !WRITE(*, *) "LB:", LB
         CM(I,J) = INF
         DM(I,J) = -ONE
         VM(I,J) = ZERO
@@ -139,17 +138,18 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) 
 end subroutine twdtwf90
 
 
-! Computation of TWDTW cost matrix
+! Computation of TWDTW
 ! XM - matrix with the time series (N,D)
 ! YM - matrix with the temporal profile (M,D)
-! CM - Output cumulative cost matrix
-! DM - Direction matrix
-! VM - Starting points matrix
-! N  - Number of rows in CM, DM, and VM - time series
-! M  - Number of columns CM, DM, and VM - temporal profile
+! CM - Output cumulative cost matrix (N+1,M)
+! DM - Direction matrix (N+1,M)
+! VM - Starting points matrix (N+1,M)
+! N  - Number of observations in the time series YM
+! M  - Number of observations in the time series XM
 ! D  - Number of spectral dimensions including time in XM and YM
 ! TW - Time-Weight parameters alpha and beta
-! LB - Constrain TWDTW calculation to band given by a maximum elapsed time
+! LB - Maximum elapsed time to constrain TWDTW calculation
+! CL - The length of the time cycle
 subroutine twdtwf90gt(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL)
   use, intrinsic :: ieee_arithmetic
   implicit none
