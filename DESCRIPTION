@@ -26,6 +26,7 @@ Suggests:
     rbenchmark,
     testthat (>= 3.0.0)
 LinkingTo: Rcpp
+Biarch: true
 Collate: 
     'RcppExports.R'
     'convert_date_to_numeric.R'

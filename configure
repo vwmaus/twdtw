@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Get the R version
+RVER=`Rscript -e 'cat(paste0(R.version$major,".",R.version$minor), sep="\n")'`
+
+# Compare the R version with 3.5.0
+if [ $(echo "$RVER <= 3.5.0" | bc -l) -eq 1 ]
+then
+    echo "CXX_STD = CXX11" >> src/Makevars
+fi
