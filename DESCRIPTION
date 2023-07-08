@@ -11,7 +11,11 @@ Authors@R:
         comment = c(ORCID = "0000-0002-7385-4723")
       )
     )
-Description: Implements Time-Weighted Dynamic Time Warping (TWDTW), a measure for time series similarities. TWDTW is applicable to multi-dimensional time series with various resolutions, making it highly suited for environmental and ecological data analysis, such as remote sensing imagery, climate data, hydrology, or animal movement. The package provides a user-friendly R interface, efficient Fortran routines for TWDTW calculations, flexible time weighting definition, utilities for time series preprocessing, and visualization.
+Description: Implements Time-Weighted Dynamic Time Warping (TWDTW), a measure for time series similarities. 
+    TWDTW is applicable to multi-dimensional time series with various resolutions, making it highly suited 
+    for environmental and ecological data analysis, such as remote sensing imagery, climate data, hydrology, 
+    or animal movement. The package provides a user-friendly R interface, efficient Fortran routines for TWDTW 
+    calculations, flexible time weighting definition, utilities for time series preprocessing, and visualization.
 License: GPL (>= 3)
 URL: https://github.com/vwmaus/twdtw
 BugReports: https://github.com/vwmaus/twdtw/issues
@@ -26,7 +30,6 @@ Suggests:
     rbenchmark,
     testthat (>= 3.0.0)
 LinkingTo: Rcpp
-Biarch: true
 Collate: 
     'RcppExports.R'
     'convert_date_to_numeric.R'
