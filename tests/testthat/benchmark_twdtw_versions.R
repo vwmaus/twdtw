@@ -45,7 +45,6 @@ benchmark(
   twdtw_f90_lb     = twdtw_call(version = 'f90', max_elapsed = 30),
   twdtw_f90_fun_lb = twdtw_call(version = 'f90', max_elapsed = 30, time_weight = tw_r_fun),
   twdtw_f90goto_lb = twdtw_call(version = 'f90goto', max_elapsed = 30),
-  twdtw_cpp_lb     = twdtw_call(version = 'cpp', max_elapsed = 30),
-  replications = 1000
+  twdtw_cpp_lb     = twdtw_call(version = 'cpp', max_elapsed = 30)
 )
 

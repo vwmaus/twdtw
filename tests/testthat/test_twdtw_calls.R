@@ -42,11 +42,7 @@ test_that("multiple functions return the same value", {
     twdtw_f90     = twdtw_call(version = 'f90'),
     twdtw_f90_fun = twdtw_call(version = 'f90', time_weight = tw_r_fun),
     twdtw_f90goto = twdtw_call(version = 'f90goto'),
-    twdtw_cpp     = twdtw_call(version = 'cpp'),
-    twdtw_f90_lb  = twdtw_call(version = 'f90', max_elapsed = 30),
-    twdtw_f90_fun_lb = twdtw_call(version = 'f90', max_elapsed = 30, time_weight = tw_r_fun),
-    twdtw_f90goto_lb = twdtw_call(version = 'f90goto', max_elapsed = 30),
-    twdtw_cpp_lb  = twdtw_call(version = 'cpp', max_elapsed = 30)
+    twdtw_cpp     = twdtw_call(version = 'cpp')
   )
 
   for (i in 2:length(results)) {

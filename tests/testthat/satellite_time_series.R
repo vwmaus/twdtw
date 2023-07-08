@@ -53,7 +53,26 @@ test_that("multiple functions return the same value", {
                       y = ts_y,
                       cycle_length = 'year',
                       time_scale = 'day',
-                      time_weight = c(steepness = 0.1, midpoint = 50), output = 'matches', version = 'cpp')
+                      time_weight = c(steepness = 0.1, midpoint = 50), output = 'matches', version = 'cpp'),
+
+    twdtw_f90_me = twdtw(x = ts_x,
+                         y = ts_y,
+                         cycle_length = 'year',
+                         time_scale = 'day',
+                         time_weight = c(steepness = 0.1, midpoint = 50), output = 'matches', version = 'f90', max_elapsed = 60),
+
+    twdtw_f90goto_me = twdtw(x = ts_x,
+                             y = ts_y,
+                             cycle_length = 'year',
+                             time_scale = 'day',
+                             time_weight = c(steepness = 0.1, midpoint = 50), output = 'matches', version = 'f90goto', max_elapsed = 60),
+
+    twdtw_cpp_me = twdtw(x = ts_x,
+                         y = ts_y,
+                         cycle_length = 'year',
+                         time_scale = 'day',
+                         time_weight = c(steepness = 0.1, midpoint = 50), output = 'matches', version = 'cpp', max_elapsed = 60)
+
   )
 
   for (i in 2:length(results)) {
