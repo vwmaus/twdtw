@@ -24,6 +24,9 @@ m <- twdtw(x = ts_x,
            time_scale = 'day',
            time_weight = c(steepness = 0.1, midpoint = 50), output = 'internals')
 
+# Check plot cost matrix
+plot_cost_matrix(m)
+
 test_that("twdtw returns the correct value", {
   expected_value <- 5.93395
   actual_value <- twdtw(x = ts_x,
