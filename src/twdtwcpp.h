@@ -3,13 +3,7 @@
 
 #include <Rcpp.h>
 
-// Compute TWDTW distance using logistic weight
-double distancecpp(const Rcpp::NumericVector& YM, const Rcpp::NumericVector& XM, int N, int M, int D, int I, int J, const Rcpp::NumericVector& TW);
-
-// Compute elapsed time in days
-double ellapsedcpp(double X);
-
-// Compute TWDTW distance using logistic weight
+// Define TWDTW distance
 void twdtw_cpp(const Rcpp::NumericMatrix& XM, const Rcpp::NumericMatrix& YM, Rcpp::NumericMatrix& CM, Rcpp::IntegerMatrix& DM, Rcpp::IntegerMatrix& VM,
                int N, int M, int D, const Rcpp::NumericVector& TW, double LB, Rcpp::IntegerVector& JB, double CL);
 

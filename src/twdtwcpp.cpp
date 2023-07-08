@@ -1,39 +1,22 @@
 #include <Rcpp.h>
-#include <algorithm> // for std::min
-#include <cmath>     // for std::exp and std::sqrt
+#include <algorithm>
+#include <cmath>
 #include "twdtwcpp.h"
 using namespace Rcpp;
 
 /**
- * This function applies a logistic transformation on an input time difference (TD) and distance (DIST)
- * using a pair of weights (TW1, TW2).
- *
- * @param DIST : A double representing the distance parameter in the logistic transformation.
- * @param TD : A double representing the time difference parameter in the logistic transformation.
- * @param TW1 : A double representing the first weight parameter in the logistic transformation.
- * @param TW2 : A double representing the second weight parameter in the logistic transformation.
- *
- * @return : A double that is the result of applying the logistic transformation on DIST and TD
- * using the weights TW1 and TW2.
- */
-double logistic_tw_cpp(double DIST, double TD, double TW1, double TW2) {
-  return DIST + 1.0 / (1.0 + std::exp(-TW1 * (TD - TW2)));
-}
-
-
-/**
- * Compute TWDTW distance using logistic weight
+ * Compute TWDTW distance
  *
  * @param XM   Matrix with the time series (N,D)
  * @param YM   Matrix with the temporal profile (M,D)
- * @param CM   Output cumulative cost matrix
- * @param DM   Direction matrix
- * @param VM   Starting points matrix
- * @param N    Number of rows in CM, DM, and VM - time series
- * @param M    Number of columns CM, DM, and VM - temporal profile
+ * @param CM   Output cumulative cost matrix (N+1,M)
+ * @param DM   Direction matrix (N+1,M)
+ * @param VM   Starting points matrix (N+1,M)
+ * @param N    Number of observations in the time series YM
+ * @param M    Number of observations in the time series XM
  * @param D    Number of spectral dimensions including time in XM and YM
  * @param TW   Time-Weight parameters alpha and beta
- * @param LB   Constrain TWDTW calculation to band given by TW(2)
+ * @param LB   Maximum elapsed time to constrain TWDTW calculation
  * @param JB   Output array of starting points
  * @param CL   The length of the time cycle
  */
@@ -61,7 +44,6 @@ void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& 
     DM(I, 0) = 3;
     VM(I, 0) = 1;
   }
-
 
   // Compute cumulative cost matrix
   int J = 2;
