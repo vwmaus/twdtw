@@ -1,1 +1,0 @@
-PKG_FFLAGS = -std=f2003
