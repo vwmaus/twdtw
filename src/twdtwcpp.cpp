@@ -66,7 +66,7 @@ void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& 
   // Compute cumulative cost matrix
   int J = 2;
   while (J <= M) {
-    VM(0,J-1) = J + 1;
+    VM(0,J-1) = J;
     int I = 2;
     while (I <= N + 1) {
       double TD = std::fabs(YM(I - 2, 0) - XM(J - 1, 0));
