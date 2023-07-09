@@ -1,3 +1,5 @@
+* Corrects URLs in README.md
+
 This is a new release.
 
 The twdtw package provides a generalized implementation of Time-Weighted Dynamic Time Warping (TWDTW) for any type of time series data.
