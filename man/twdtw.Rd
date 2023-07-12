@@ -14,6 +14,7 @@ twdtw(x, y, time_weight, cycle_length, time_scale, ...)
   time_weight,
   cycle_length,
   time_scale,
+  origin = NULL,
   index_column = "time",
   max_elapsed = Inf,
   output = "distance",
@@ -41,15 +42,20 @@ twdtw(x, y, time_weight, cycle_length, time_scale, ...)
 
 \item{time_weight}{A numeric vector with length two (steepness and midpoint of logistic weight) or a function. See details.}
 
-\item{cycle_length}{A character string or a numeric indicating the larger unit of time.
-It must be one of "year", "month", "day", "hour", or "minute". It can also receive a numeric value when \code{time_scale} is numeric.}
+\item{cycle_length}{The length of the cycle. Can be a numeric value or a string
+specifying the units ('year', 'month', 'day', 'hour', 'minute', 'second').
+When numeric, the cycle length is in the same units as time_scale. When a string,
+it specifies the time unit of the cycle.}
 
-\item{time_scale}{A character string or numeric indicating the smaller unit of time,
-which is a division of the \code{cycle_length}. If \code{cycle_length} is "year", \code{time_scale} can be one of
-"month", "day", "hour", "minute", "second". If \code{cycle_length} is "month", \code{time_scale} can be "day",
-"hour", "minute", "second", and so on. It can also receive a numeric value when \code{cycle_length} is numeric.}
+\item{time_scale}{Specifies the time scale for the conversion. Must be one of
+'year', 'month', 'day', 'hour', 'minute', 'second'. When cycle_length is a string,
+time_scale changes the unit in which the result is expressed.
+When cycle_length is numeric, time_scale is used to compute the elapsed time in seconds.}
 
 \item{...}{ignore}
+
+\item{origin}{For numeric cycle_length, the origin must be specified. This is the point
+from which the elapsed time is computed. Must be of the same class as x.}
 
 \item{index_column}{(optional) The column name of the time index for data.frame inputs. Defaults to "time".
 For matrix input, an integer indicating the column with the time index. Defaults to 1.}

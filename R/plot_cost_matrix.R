@@ -11,7 +11,7 @@
 #'         No object is returned by this function; the plot is directly outputted to the active device.
 #'
 #' @examples
-#' \dontrun{
+#'
 #' # Create a time series
 #' n <- 23
 #' t <- seq(0, pi, length.out = n)
@@ -33,7 +33,6 @@
 #'
 #' plot_cost_matrix(twdtw_obj)
 #'
-#' }
 #' @export
 plot_cost_matrix <- function(x, ...) {
 

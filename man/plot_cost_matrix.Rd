@@ -21,7 +21,7 @@ No object is returned by this function; the plot is directly outputted to the ac
 This function visualizes the Time-Weighted Dynamic Time Warping cost matrix.
 }
 \examples{
-\dontrun{
+
 # Create a time series
 n <- 23
 t <- seq(0, pi, length.out = n)
@@ -43,5 +43,4 @@ twdtw_obj <- twdtw(x, y,
 
 plot_cost_matrix(twdtw_obj)
 
-}
 }
