@@ -11,7 +11,7 @@ Authors@R:
         comment = c(ORCID = "0000-0002-7385-4723")
       )
     )
-Description: This package implements Time-Weighted Dynamic Time Warping (TWDTW), 
+Description: Implements Time-Weighted Dynamic Time Warping (TWDTW), 
     a measure for quantifying time series similarity. The TWDTW algorithm, 
     described in Maus et al. (2016) <doi:10.1109/JSTARS.2016.2517118> and 
     Maus et al. (2019) <doi:10.18637/jss.v088.i05>, is applicable to multi-dimensional 
