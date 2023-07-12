@@ -1,6 +1,3 @@
-library(twdtw)
-library(testthat)
-
 n <- 23
 t <- seq(0, pi, length.out = n)
 d <- seq(as.Date('2020-09-01'), length.out = n, by = "15 day")

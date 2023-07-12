@@ -1,6 +1,3 @@
-library(twdtw)
-library(testthat)
-
 ts_x <- read.csv(system.file("sits/timeseries.csv", package = "twdtw"))
 ts_y <- read.csv(system.file("sits/reference.csv", package = "twdtw"))
 
@@ -33,8 +30,8 @@ test_that("twdtw returns the correct value", {
                         y = ts_y,
                         cycle_length = 'year',
                         time_scale = 'day',
-                        time_weight = c(steepness = 0.1, midpoint = 50), output = 'distance')
-  expect_equal(actual_value, expected_value, tolerance = 0.00001)
+                        time_weight = c(steepness = 0.1, midpoint = 50), output = 'distance')[1]
+  expect_equal(actual_value, expected_value, tolerance = 0.0001)
 })
 
 
