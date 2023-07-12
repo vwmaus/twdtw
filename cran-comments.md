@@ -1,3 +1,9 @@
+* Adds quotes to DESCRIPTION text and \value to Rd files
+
+* Improves code coverage with tests and examples
+
+## Previous comments below
+
 * Corrects URLs in README.md
 
 This is a new release.
