@@ -2,8 +2,13 @@
 #'
 #' This function visualizes the Time-Weighted Dynamic Time Warping cost matrix.
 #'
-#' @param twdtw_obj An object of class 'twdtw' including internal data.
+#' @param x An object of class 'twdtw' including internal data.
 #' @param ... Additional arguments passed to \code{\link[graphics]{image}}.
+#'
+#' @return An image plot of the TWDTW cost matrix. The x-axis represents the time series x,
+#'         and the y-axis represents the time series y. The cost matrix is color-coded,
+#'         with darker shades indicating higher costs and lighter shades indicating lower costs.
+#'         No object is returned by this function; the plot is directly outputted to the active device.
 #'
 #' @examples
 #' \dontrun{
@@ -20,7 +25,7 @@
 #' plot(x, type = "l", xlim = range(c(d, d + 5)))
 #' lines(y, col = "red")
 #'
-#' Call twdtw using "output = 'internals'"
+#' # Call twdtw using "output = 'internals'
 #' twdtw_obj <- twdtw(x, y,
 #'        cycle_length = 'year',
 #'        time_scale = 'day',
@@ -30,18 +35,18 @@
 #'
 #' }
 #' @export
-plot_cost_matrix <- function(twdtw_obj, ...) {
+plot_cost_matrix <- function(x, ...) {
 
-  if (!inherits(twdtw_obj, "twdtw")) {
-    stop("twdtw_obj must be of class 'twdtw'")
+  if (!inherits(x, "twdtw")) {
+    stop("x must be of class 'twdtw'")
   }
 
-  if (!"CM" %in% names(twdtw_obj)) {
-    stop("Cost matrix (CM) not found in twdtw_obj")
+  if (!"CM" %in% names(x)) {
+    stop("Cost matrix (CM) not found in x")
   }
 
   # Get the cost matrix
-  cost_matrix <- t(twdtw_obj$CM[-1,])
+  cost_matrix <- t(x$CM[-1,])
 
   # Create the plot
   image(cost_matrix, ..., xlab = "Time Series x", ylab = "Time Series y", main = "TWDTW Cost Matrix")

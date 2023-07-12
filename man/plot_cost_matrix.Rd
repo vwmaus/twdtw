@@ -4,12 +4,18 @@
 \alias{plot_cost_matrix}
 \title{Plot TWDTW cost matrix}
 \usage{
-plot_cost_matrix(twdtw_obj, ...)
+plot_cost_matrix(x, ...)
 }
 \arguments{
-\item{twdtw_obj}{An object of class 'twdtw' including internal data.}
+\item{x}{An object of class 'twdtw' including internal data.}
 
 \item{...}{Additional arguments passed to \code{\link[graphics]{image}}.}
+}
+\value{
+An image plot of the TWDTW cost matrix. The x-axis represents the time series x,
+and the y-axis represents the time series y. The cost matrix is color-coded,
+with darker shades indicating higher costs and lighter shades indicating lower costs.
+No object is returned by this function; the plot is directly outputted to the active device.
 }
 \description{
 This function visualizes the Time-Weighted Dynamic Time Warping cost matrix.
@@ -29,7 +35,7 @@ y <- data.frame(time = d + 30, v1 = sin(t)*2 + runif(n))
 plot(x, type = "l", xlim = range(c(d, d + 5)))
 lines(y, col = "red")
 
-Call twdtw using "output = 'internals'"
+# Call twdtw using "output = 'internals'
 twdtw_obj <- twdtw(x, y,
        cycle_length = 'year',
        time_scale = 'day',

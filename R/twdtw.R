@@ -63,8 +63,8 @@
 #'
 #' @return An S3 object twdtw either:
 #' If output = 'distance', a numeric value representing the TWDTW distance between the two time series.
-#' If output = 'matches', a numeric matrix of all TWDTW matches. For each match the starting index, ending index, and distance are returned.
-#' If output = 'internals', a list of all TWDTW internal data is returned.
+#' If output = 'matches', a numeric matrix of all TWDTW matches. For each match the starting index, ending index,
+#' and distance are returned. If output = 'internals', a list of all TWDTW internal data is returned.
 #'
 #' @references
 #' Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Moura, Y. M. (2016).
@@ -293,8 +293,13 @@ twdtw.matrix <- function(x, y,
 
 #' Print method for twdtw class
 #'
-#' @param x An object of class `twdtw`
+#' @param x An object of class `twdtw`.
 #' @param ... Arguments passed to \code{\link{print.default}} or other methods.
+#'
+#' @return This function returns a textual representation of the object `twdtw`, which is printed directly to the console.
+#'         If `x` is a list, the function will print a summary of matches and omit `twdtw`'s  internal data, see `names(x)`.
+#'         If `x` is not a list, it prints the content of `x`, i.e. either a matrix with all matches or the lowest `twdtw` distance.
+#'
 #' @export
 print.twdtw <- function(x, ...) {
   if(is.list(x)){

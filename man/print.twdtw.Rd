@@ -7,9 +7,14 @@
 \method{print}{twdtw}(x, ...)
 }
 \arguments{
-\item{x}{An object of class \code{twdtw}}
+\item{x}{An object of class \code{twdtw}.}
 
 \item{...}{Arguments passed to \code{\link{print.default}} or other methods.}
+}
+\value{
+This function returns a textual representation of the object \code{twdtw}, which is printed directly to the console.
+If \code{x} is a list, the function will print a summary of matches and omit \code{twdtw}'s  internal data, see \code{names(x)}.
+If \code{x} is not a list, it prints the content of \code{x}, i.e. either a matrix with all matches or the lowest \code{twdtw} distance.
 }
 \description{
 Print method for twdtw class
