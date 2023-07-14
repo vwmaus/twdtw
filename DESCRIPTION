@@ -31,7 +31,6 @@ Imports:
     Rcpp,
     proxy
 Suggests:
-    readr,
     rbenchmark,
     testthat (>= 3.0.0)
 LinkingTo: Rcpp
