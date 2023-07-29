@@ -1,4 +1,4 @@
-# version 1.0-1, Jul 29, 2023
+# version 1.0-1, August 7, 2023
 
 * Minor fixes. Package usage and results are not affected.
 
