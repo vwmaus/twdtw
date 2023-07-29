@@ -1,19 +1,10 @@
-* Adds quotes to DESCRIPTION text and \value to Rd files
+# twdtw-1.0-1
 
-* Improves code coverage with tests and examples
-
-## Previous comments below
-
-* Corrects URLs in README.md
-
-This is a new release.
-
-The twdtw package provides a generalized implementation of Time-Weighted Dynamic Time Warping (TWDTW) for any type of time series data.
-Previously, TWDTW was only available for remote sensing time series from the package dtwSat.
+* Release requested to fix error in the Fortran code https://www.stats.ox.ac.uk/pub/bdr/Intel/twdtw.log
 
 ## Test environments
 
-* Local Ubuntu 22.04 LTS, R-4.3.1, GCC GNU Fortran
+* Local Ubuntu 22.04.2 LTS, R-4.3.1, GCC GNU Fortran
 * macOS Monterey 12.6.7, R-4.3.1, GCC GNU Fortran
 * Ubuntu 22.04.2 LTS, R-devel, GCC GNU Fortran
 * Ubuntu 22.04.2 LTS, R-4.2.3, GCC GNU Fortran
@@ -24,15 +15,6 @@ Previously, TWDTW was only available for remote sensing time series from the pac
 * Debian Linux, R-devel, GCC ASAN/UBSAN
 
 ## R CMD check results
-
-* checking CRAN incoming feasibility ... NOTE
-  Maintainer: 'Victor Maus <vwmaus1@gmail.com>'
-  
-  New submission
-
-* Possibly misspelled words in DESCRIPTION: TWDTW (14:61, 14:109, 14:418)
-  
-The word is correctly spelled
 
 * Debian Linux, R-devel, GCC ASAN/UBSAN returned PREPERROR
 

@@ -1,6 +1,6 @@
 Package: twdtw
 Title: Time-Weighted Dynamic Time Warping
-Version: 1.0-0
+Version: 1.0-1
 Authors@R: 
     c(
       person(
