@@ -5,12 +5,12 @@ using namespace Rcpp;
 // Forward declaration of the Fortran functions
 extern "C" {
 
-  double logistic_tw(double* DIST, double* TD, double* TW1, double* TW2);
+  double logistic_tw_(double* DIST, double* TD, double* TW1, double* TW2);
 
   void twdtwf90gt_(double* XM, double* YM, double* CM, int* DM, int* VM,
                    int* N, int* M, int* D, double* TW, double* LB, int* JB, double* CL);
 
-  void twdtwf90(double* XM, double* YM, double* CM, int* DM, int* VM,
+  void twdtwf90_(double* XM, double* YM, double* CM, int* DM, int* VM,
                 int* N, int* M, int* D, double* TW, double* LB, int* JB,
                 double* CL, double (*callback_func)(double*, double*, double*, double*));
 }
@@ -66,13 +66,13 @@ void twdtw_f90(NumericMatrix XM, NumericMatrix YM, NumericMatrix CM, IntegerMatr
 
   if (is_tw_r_fun_null) {
     // Call default logistic time weight
-    twdtwf90(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(),
-             &N, &M, &D, TW.begin(), &LB, JB.begin(), &CL, logistic_tw);
+    twdtwf90_(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(),
+             &N, &M, &D, TW.begin(), &LB, JB.begin(), &CL, logistic_tw_);
   } else {
     Function tw_r_fun_func(tw_r_fun);
     // Allocate the CallbackFuncObject on heap to call defined R function
     gCallbackFuncObject = new CallbackFuncObject(tw_r_fun_func);
-    twdtwf90(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(),
+    twdtwf90_(XM.begin(), YM.begin(), CM.begin(), DM.begin(), VM.begin(),
              &N, &M, &D, TW.begin(), &LB, JB.begin(), &CL, callback_bridge);
 
     // Delete the CallbackFuncObject immediately after using it
