@@ -1,6 +1,6 @@
 # twdtw-1.0-1
 
-* Release requested to fix error in the Fortran code https://www.stats.ox.ac.uk/pub/bdr/Intel/twdtw.log
+* Minor fix in the Fortran code spoted in https://www.stats.ox.ac.uk/pub/bdr/Intel/twdtw.log
 
 ## Test environments
 
