@@ -57,7 +57,7 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) 
   real(c_double), intent(in) :: XM(M,D), YM(N,D), TW(2), LB, CL
   real(c_double), intent(out) :: CM(N+1,M)
   ! Internals
-  real(c_double) :: W, CP, ST, A, B, TD, DIST
+  real(c_double) :: CP, ST, TD, DIST
   integer(c_int) :: I, J, K, ZERO=0, ONE=1, JM, VM_value
   real(c_double) :: NAN, INF
   NAN = ieee_value(0.0, ieee_quiet_nan)
@@ -162,7 +162,7 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL)
   integer, intent(in) :: N, M, D
   integer :: DM(N+1,M), VM(N+1,M), JB(N)
   double precision, intent(in) :: XM(M,D), YM(N,D), TW(2), LB, CL
-  double precision :: CM(N+1,M), CP, ST, A, B, TD, DIST
+  double precision :: CM(N+1,M), CP, ST, TD, DIST
   integer :: I, J, K, ZERO, ONE, JM, VM_value
   parameter(ZERO=0, ONE=1)
   double precision :: NAN, INF
