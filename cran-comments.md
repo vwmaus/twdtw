@@ -1,6 +1,11 @@
 # twdtw-1.0-1
 
-* Minor fix in the Fortran code spoted in https://www.stats.ox.ac.uk/pub/bdr/Intel/twdtw.log
+* Fixes error: 
+    error #7723: RESULT name must not be same as FUNCTION name.   [LOGISTIC_TW]
+    function logistic_tw(DIST, TD, TW1, TW2) bind(C, name="logistic_tw_") 
+    result(logistic_tw)
+
+The f90 files compile locally using intel-basekit on Ubuntu 22.04.2 LTS.
 
 ## Test environments
 
