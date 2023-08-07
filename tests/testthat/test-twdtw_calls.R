@@ -74,9 +74,16 @@ test_that("multiple functions return the same value", {
   }
 })
 
-# Check output types
+# Test output types
 twdtw_call(output = 'distance')
 
 twdtw_call(output = 'matches')
 
 twdtw_call(output = 'internals')
+
+# Test proxy call
+test_that("twdtw_call returns the same result as proxy::dist with given parameters", {
+  expected <- proxy::dist(x = ts_x, y = ts_y, method = "twdtw", cycle_length = 'year', time_scale = 'day', time_weight = c(steepness = 0.1, midpoint = 50))
+  actual <- twdtw_call(output = 'distance')
+  expect_equal(actual[1], expected[1])
+})
