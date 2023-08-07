@@ -11,12 +11,12 @@
 ! Returns:
 ! A double precision value that is the result of applying the logistic transformation on DIST and TD
 ! using the weights TW1 and TW2.
-function logistic_tw(DIST, TD, TW1, TW2) bind(C, name="logistic_tw_") result(logistic_tw)
+function logistic_tw(DIST, TD, TW1, TW2) bind(C, name="logistic_tw") result(res)
   use iso_c_binding
   implicit none
   real(c_double), intent(in) :: DIST, TD, TW1, TW2
-  real(c_double) :: logistic_tw
-  logistic_tw = DIST + 1.0d0 / (1.0d0 + exp(-TW1 * (TD - TW2)))
+  real(c_double) :: res
+  res = DIST + 1.0d0 / (1.0d0 + exp(-TW1 * (TD - TW2)))
 end function logistic_tw
 
 
@@ -38,7 +38,7 @@ end function logistic_tw
 ! JB - Output array of starting points
 ! CL - The length of the time cycle
 ! callback_func - A time-weight fucntion
-subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) bind(C, name="twdtwf90_")
+subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) bind(C, name="twdtwf90")
   use, intrinsic :: ieee_arithmetic
   use iso_c_binding
   implicit none
