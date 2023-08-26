@@ -89,6 +89,27 @@ date_to_numeric_cycle <- function(x, cycle_length, time_scale, origin = NULL) {
   }
 }
 
+#' Convert to Date or POSIXct Format
+#'
+#' This function converts a vector of date-like strings to Date or POSIXct format,
+#' depending on the format of the input strings. It checks if the input is already
+#' in Date or POSIXct format and performs the conversion accordingly.
+#'
+#' @param x A vector of strings or objects to be converted.
+#' 
+#' @return A vector of dates or datetimes.
+#' 
+#' @examples
+#' 
+#' dates <- c("2023-07-15", "2023-07-16")
+#' 
+#' datetimes <- c("2023-07-15 12:30:00", "2023-07-16 13:45:00")
+#' 
+#' to_date_time(dates)
+#' 
+#' to_date_time(datetimes)
+#'
+#' @export
 to_date_time <- function(x){
   if (!inherits(x, c("Date", "POSIXt"))) {
     # check if all strings in the vector include hours, minutes, and seconds
