@@ -4,6 +4,7 @@
 [![Coverage Status](https://img.shields.io/codecov/c/github/vwmaus/twdtw/main.svg)](https://app.codecov.io/gh/vwmaus/twdtw)
 [![CRAN](https://www.r-pkg.org/badges/version/twdtw)](https://cran.r-project.org/package=twdtw)
 [![Downloads](https://cranlogs.r-pkg.org/badges/twdtw?color=brightgreen)](https://www.r-pkg.org/pkg/twdtw)
+[![total](http://cranlogs.r-pkg.org/badges/grand-total/twdtw)](http://www.r-pkg.org/pkg/twdtw)
 <!-- badges: end -->
   
 # twdtw
