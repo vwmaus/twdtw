@@ -5,6 +5,8 @@
 [![CRAN](https://www.r-pkg.org/badges/version/twdtw)](https://cran.r-project.org/package=twdtw)
 [![Downloads](https://cranlogs.r-pkg.org/badges/twdtw?color=brightgreen)](https://www.r-pkg.org/pkg/twdtw)
 [![total](http://cranlogs.r-pkg.org/badges/grand-total/twdtw)](http://www.r-pkg.org/pkg/twdtw)
+[![cran checks](https://badges.cranchecks.info/worst/twdtw.svg)](https://cran.r-project.org/web/checks/check_results_twdtw.html)
+[![status](https://tinyverse.netlify.com/badge/twdtw)](https://CRAN.R-project.org/package=twdtw)
 <!-- badges: end -->
   
 # twdtw
