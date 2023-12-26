@@ -1,3 +1,10 @@
+# twdtw-1.1-0
+
+* Implements twdtw-knn1
+
+* Adds larger test set
+
+
 # twdtw-1.0-1
 
 * Fixes error: 
