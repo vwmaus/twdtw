@@ -13,3 +13,7 @@ twdtw_f90 <- function(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, tw_r_fun = NU
     invisible(.Call(`_twdtw_twdtw_f90`, XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, tw_r_fun))
 }
 
+twdtw_knn_f90 <- function(XM, XD, TX, YM, TY, YO, TW, LB, CL, K) {
+    .Call(`_twdtw_twdtw_knn_f90`, XM, XD, TX, YM, TY, YO, TW, LB, CL, K)
+}
+
