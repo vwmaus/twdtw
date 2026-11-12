@@ -1,8 +1,65 @@
 # twdtw-1.1-0
 
-* Implements twdtw-knn1
+This version adds new features and fixes a memory error. No function or argument
+of version 1.0-1 was removed or changed.
 
-* Adds larger test set
+## Changes
+
+* New function `twdtw_knn()`. It calculates the TWDTW distance between a set of
+  time series and a set of temporal patterns in a single call to the 'Fortran'
+  routines, and returns for each time series the k patterns with the lowest
+  distance. The distances are the same as the distances calculated with
+  `twdtw()`. In our benchmark with 10,000 time series and 5 patterns it was
+  about 120 times faster than calling `twdtw()` for each pair.
+
+* The function `to_date_time()` is now exported. It was an internal function in
+  version 1.0-1.
+
+* Fixes an out-of-bounds write in `twdtw()`. The array that stores the matches
+  had the length of the pattern (`y`), but there can be as many matches as
+  observations in the time series (`x`). If a pattern matched a longer time
+  series more often than the pattern has observations, the 'Fortran' and 'C++'
+  routines wrote beyond the end of the array. This could return an incorrect
+  distance, omit matches, or crash R. The array now has the length of the time
+  series.
+
+* Adds tests for the new function and for the memory error, and a larger test
+  data set with 999 time series.
+
+## Segmentation fault in the tests of 'dtwSat'
+
+The memory error fixed in this version caused the segmentation fault in the
+tests of 'dtwSat' 1.0.0, which was archived on 2023-10-31
+(<https://cran-archive.r-project.org/web/checks/2023/2023-10-31_check_results_dtwSat.html>).
+The test that failed compares time series with 23 observations to patterns with
+6 observations. We reproduced the segmentation fault with twdtw 1.0-1, and it
+does not occur with this version. We plan to resubmit 'dtwSat' after this
+update.
+
+## Test environments
+
+* Local Ubuntu 24.04.5 LTS, R 4.6.2, GCC and GNU Fortran 13.3.0
+* GitHub Actions, Ubuntu 26.04.1 LTS, R-devel (2026-11-11 r90876)
+* GitHub Actions, Ubuntu 26.04.1 LTS, R 4.6.2
+* GitHub Actions, Ubuntu 26.04.1 LTS, R 4.5.3
+* GitHub Actions, macOS Tahoe 26.7.2 (arm64), R 4.6.2
+* GitHub Actions, Windows Server 2022, R 4.6.2
+
+## R CMD check results
+
+There were no ERRORs or WARNINGs.
+
+There were no NOTEs on GitHub Actions. The local check with `--as-cran` returned
+two NOTEs that are caused by the local installation of R and not by the
+package: the compiler flag `-mno-omit-leaf-frame-pointer`, which is set in the
+R configuration of the system, and 'HTML Tidy' not being installed.
+
+## Reverse dependencies
+
+There is one reverse dependency on CRAN, 'rasterdiv', which imports 'twdtw' and
+calls `twdtw()` for pairs of time series with the same dates. The interface of
+`twdtw()` did not change, and for this kind of input the results of this
+version are identical to the results of version 1.0-1.
 
 
 # twdtw-1.0-1
