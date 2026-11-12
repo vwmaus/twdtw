@@ -255,7 +255,8 @@ twdtw.matrix <- function(x, y,
   CM <- matrix(0, nrow = N+1, ncol = M)
   DM <- matrix(0L, nrow = N+1, ncol = M)
   VM <- matrix(0L, nrow = N+1, ncol = M)
-  JB <- as.integer(rep(0, N))
+  # One slot per observation in x: there can be as many matches as columns in CM
+  JB <- as.integer(rep(0, M))
   CL <- as.double(cycle_length)
   LB <- as.double(max_elapsed)
   if (is.function(time_weight)){

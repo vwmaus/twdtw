@@ -17,7 +17,7 @@ using namespace Rcpp;
  * @param D    Number of spectral dimensions including time in XM and YM
  * @param TW   Time-Weight parameters alpha and beta
  * @param LB   Maximum elapsed time to constrain TWDTW calculation
- * @param JB   Output array of starting points
+ * @param JB   Output array of starting points (M), at most one match per column of CM
  * @param CL   The length of the time cycle
  */
 // [[Rcpp::export]]
