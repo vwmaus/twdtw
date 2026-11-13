@@ -65,8 +65,14 @@
 #' Be careful, though: if `max_elapsed` is set too low, it could change the results.
 #' It important to try out different settings for your specific problem.
 #'
+#' The time series can have missing values. An observation with a missing value in any dimension
+#' is removed from \code{x} and \code{y}, and the distance is calculated with the remaining observations.
+#' Only if every observation of \code{x} or \code{y} has a missing value, there is nothing to compare:
+#' the distance is \code{NA} and there are no matches.
+#'
 #' @return An S3 object twdtw either:
-#' If output = 'distance', a numeric value representing the TWDTW distance between the two time series.
+#' If output = 'distance', a numeric value representing the TWDTW distance between the two time series,
+#' or \code{NA} if every observation of one of them has a missing value.
 #' If output = 'matches', a numeric matrix of all TWDTW matches. For each match the starting index, ending index,
 #' and distance are returned. If output = 'internals', a list of all TWDTW internal data is returned.
 #'
@@ -263,6 +269,23 @@ twdtw.matrix <- function(x, y,
     TW <- as.double(c(0.0, 0.0))
   } else {
     TW <- as.double(time_weight)
+  }
+
+  # The observations with missing values were removed. If none is left in x or
+  # y, there is nothing to compare: the distance is missing and there are no
+  # matches. The compiled routines must not be called, because they read and
+  # write the first observation of both time series
+  if (N < 1L || M < 1L) {
+    out <- matrix(numeric(0), ncol = 3)
+    if (output == 'distance'){
+      out <- NA_real_
+    } else if (output == 'internals'){
+      out <- list(XM = XM, YM = YM, CM = CM, DM = DM,
+                  VM = VM, N = N, M = M, D = D,
+                  TW = TW, LB = LB, JB = JB, CL = CL, matches = out)
+    }
+    class(out) <- "twdtw"
+    return(out)
   }
 
   # Get the function version using its name

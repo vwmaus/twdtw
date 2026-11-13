@@ -72,7 +72,8 @@ or 'cpp' for C++ version. Defaults to 'f90'. See details.}
 }
 \value{
 An S3 object twdtw either:
-If output = 'distance', a numeric value representing the TWDTW distance between the two time series.
+If output = 'distance', a numeric value representing the TWDTW distance between the two time series,
+or \code{NA} if every observation of one of them has a missing value.
 If output = 'matches', a numeric matrix of all TWDTW matches. For each match the starting index, ending index,
 and distance are returned. If output = 'internals', a list of all TWDTW internal data is returned.
 }
@@ -116,6 +117,11 @@ to limit the TWDTW calculation to a maximum elapsed time. This means it will ski
 comparisons between pairs of observations in \code{x} and \code{y} that are far apart in time.
 Be careful, though: if \code{max_elapsed} is set too low, it could change the results.
 It important to try out different settings for your specific problem.
+
+The time series can have missing values. An observation with a missing value in any dimension
+is removed from \code{x} and \code{y}, and the distance is calculated with the remaining observations.
+Only if every observation of \code{x} or \code{y} has a missing value, there is nothing to compare:
+the distance is \code{NA} and there are no matches.
 }
 \examples{
 
