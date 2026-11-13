@@ -1,6 +1,6 @@
 # twdtw-1.1-0
 
-This version adds new features and fixes a memory error. No function or argument
+This version adds new features and fixes two memory errors. No function or argument
 of version 1.0-1 was removed or changed.
 
 ## Changes
@@ -10,7 +10,9 @@ of version 1.0-1 was removed or changed.
   routines, and returns for each time series the k patterns with the lowest
   distance. The distances are the same as the distances calculated with
   `twdtw()`. In our benchmark with 10,000 time series and 5 patterns it was
-  about 120 times faster than calling `twdtw()` for each pair.
+  about 120 times faster than calling `twdtw()` for each pair. A time-weight
+  function defined in 'R' is called once for each temporal pattern, and not
+  once for each pair of observations, if the function is vectorised.
 
 * The function `to_date_time()` is now exported. It was an internal function in
   version 1.0-1.
@@ -23,12 +25,21 @@ of version 1.0-1 was removed or changed.
   distance, omit matches, or crash R. The array now has the length of the time
   series.
 
-* Adds tests for the new function and for the memory error, and a larger test
+* Fixes a second out-of-bounds write in `twdtw()`. The function removes the
+  observations with missing values and compares the remaining observations. If
+  every observation of a time series had a missing value, no observation was
+  left, but the 'Fortran' and 'C++' routines still read and wrote the first
+  element of arrays without elements, which could crash R. `twdtw()` now
+  returns `NA` for the distance and no matches in this case, and does not call
+  the compiled routines. Time series with some missing values are compared as
+  before.
+
+* Adds tests for the new function and for the memory errors, and a larger test
   data set with 999 time series.
 
 ## Segmentation fault in the tests of 'dtwSat'
 
-The memory error fixed in this version caused the segmentation fault in the
+The first memory error fixed in this version caused the segmentation fault in the
 tests of 'dtwSat' 1.0.0, which was archived on 2023-10-31
 (<https://cran-archive.r-project.org/web/checks/2023/2023-10-31_check_results_dtwSat.html>).
 The test that failed compares time series with 23 observations to patterns with
@@ -59,7 +70,10 @@ R configuration of the system, and 'HTML Tidy' not being installed.
 There is one reverse dependency on CRAN, 'rasterdiv', which imports 'twdtw' and
 calls `twdtw()` for pairs of time series with the same dates. The interface of
 `twdtw()` did not change, and for this kind of input the results of this
-version are identical to the results of version 1.0-1.
+version are identical to the results of version 1.0-1. The only difference is
+a time series in which every observation has a missing value: `twdtw()` now
+returns `NA` for it and wrote out of bounds before. Time series with some
+missing values give the same results as in version 1.0-1.
 
 
 # twdtw-1.0-1
