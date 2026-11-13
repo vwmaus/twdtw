@@ -10,6 +10,8 @@
 
 * `twdtw()` returns `NA` if every observation of a time series has a missing value, so that no observation is left to compare. Before, it wrote out of bounds in this case, which could crash R. A time series with some missing values is compared as before, using its observations without missing values.
 
+* `twdtw()` stops with an error if a time-weight function is used with `version = 'f90goto'` or `version = 'cpp'`. These two versions do not call the function: they ignored it without a message and added a constant time weight of 0.5.
+
 # version 1.0-1, August 7, 2023
 
 * Minor fixes. Package usage and results are not affected.

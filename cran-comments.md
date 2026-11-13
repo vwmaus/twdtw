@@ -34,6 +34,12 @@ of version 1.0-1 was removed or changed.
   the compiled routines. Time series with some missing values are compared as
   before.
 
+* `twdtw()` stops with an error if a time-weight function defined in 'R' is
+  used with `version = 'f90goto'` or `version = 'cpp'`. Only the default
+  version, 'f90', calls the function. The other two versions ignored it
+  without a message and added a constant time weight of 0.5 to the distance of
+  each pair of observations.
+
 * Adds tests for the new function and for the memory errors, and a larger test
   data set with 999 time series.
 

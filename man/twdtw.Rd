@@ -109,6 +109,7 @@ A time-weight function passed to \code{time_weight} must receive two numeric arg
 single numeric value. The first argument received is the Euclidean \eqn{dist_{i,j}} and the second
 is the elapsed time \eqn{el_{i,j}}. For example,
 \code{time_weight = function(dist, el) dist + 0.1*el} defines a linear weighting scheme with a slope of 0.1.
+A time-weight function can only be used with \code{version = 'f90'}, which is the default.
 
 The Fortran 90 versions of \code{twdtw} are usually faster than the C++ version.
 The '\code{f90goto}' version, which uses goto statements, is slightly quicker than the

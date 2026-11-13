@@ -56,6 +56,7 @@
 #' single numeric value. The first argument received is the Euclidean \eqn{dist_{i,j}} and the second
 #' is the elapsed time \eqn{el_{i,j}}. For example,
 #' \code{time_weight = function(dist, el) dist + 0.1*el} defines a linear weighting scheme with a slope of 0.1.
+#' A time-weight function can only be used with \code{version = 'f90'}, which is the default.
 #'
 #' The Fortran 90 versions of \code{twdtw} are usually faster than the C++ version.
 #' The '`f90goto`' version, which uses goto statements, is slightly quicker than the
@@ -213,6 +214,12 @@ twdtw.matrix <- function(x, y,
 
   if (!(is.function(time_weight) || (is.numeric(time_weight) && length(time_weight) == 2))) {
     stop("'time_weight' should be either a function or a numeric vector with length two")
+  }
+
+  # Only the 'f90' version calls a time-weight function. The other versions
+  # would ignore the function and use the logistic time weight
+  if (is.function(time_weight) && !identical(version, 'f90')) {
+    stop("A time-weight function can only be used with version = 'f90'")
   }
 
   # Check if 'cycle_length' is declared
