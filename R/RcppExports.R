@@ -17,3 +17,7 @@ twdtw_knn_f90 <- function(XM, XD, TX, YM, TY, YO, TW, LB, CL, K) {
     .Call(`_twdtw_twdtw_knn_f90`, XM, XD, TX, YM, TY, YO, TW, LB, CL, K)
 }
 
+twdtw_knn_fun_f90 <- function(XM, XD, TX, YM, TY, YO, TW, LB, CL, K) {
+    .Call(`_twdtw_twdtw_knn_fun_f90`, XM, XD, TX, YM, TY, YO, TW, LB, CL, K)
+}
+

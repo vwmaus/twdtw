@@ -29,7 +29,7 @@ The patterns can have different number of observations.}
 \item{time}{A vector with the dates of the time dimension of \code{x}. Its length must be equal to \code{dim(x)[2]}.}
 
 \item{time_weight}{A numeric vector with length two (steepness and midpoint of logistic weight) or a function.
-See details in \code{\link{twdtw}}. A function is much slower than the logistic weight, see details.}
+See details in \code{\link{twdtw}}. A function is slower than the logistic weight, see details.}
 
 \item{cycle_length}{The length of the cycle. Can be a numeric value or a string
 specifying the units ('year', 'month', 'day', 'hour', 'minute', 'second').
@@ -83,8 +83,15 @@ have at least one complete observation.
 
 Patterns with the same distance to a time series are returned in the order of their position in \code{y}.
 
-If \code{time_weight} is a function, \code{\link{twdtw}} is called for each pair of time series
-and pattern, which is much slower than using the logistic time weight.
+If \code{time_weight} is a function, it is called once for each temporal pattern and block of time series
+and not for each pair of observations. The function receives two numeric vectors of the same length,
+the Euclidean distance and the elapsed time of the pairs of observations, and must return a numeric vector
+with their time-weighted distance. This requires a vectorised function, i.e. a function that returns for
+vectors the same values as for one distance and one elapsed time, for example
+\code{function(dist, el) dist + 0.1 * el}. Use \code{\link{ifelse}} instead of \code{if} for conditions.
+The function is tested with a sample of distances and elapsed times. If it is not vectorised,
+\code{\link{twdtw}} is called for each pair of time series and pattern, which is much slower.
+The logistic time weight given by its two parameters is the fastest option.
 }
 \examples{
 

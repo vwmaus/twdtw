@@ -13,7 +13,7 @@
 #' The patterns can have different number of observations.
 #' @param time A vector with the dates of the time dimension of \code{x}. Its length must be equal to \code{dim(x)[2]}.
 #' @param time_weight A numeric vector with length two (steepness and midpoint of logistic weight) or a function.
-#' See details in \code{\link{twdtw}}. A function is much slower than the logistic weight, see details.
+#' See details in \code{\link{twdtw}}. A function is slower than the logistic weight, see details.
 #' @param k The number of nearest neighbours. Defaults to 1, i.e. only the nearest pattern.
 #' @param origin For numeric cycle_length, the origin must be specified. This is the point
 #' from which the elapsed time is computed. Must be of the same class as \code{time}.
@@ -41,8 +41,15 @@
 #'
 #' Patterns with the same distance to a time series are returned in the order of their position in \code{y}.
 #'
-#' If \code{time_weight} is a function, \code{\link{twdtw}} is called for each pair of time series
-#' and pattern, which is much slower than using the logistic time weight.
+#' If \code{time_weight} is a function, it is called once for each temporal pattern and block of time series
+#' and not for each pair of observations. The function receives two numeric vectors of the same length,
+#' the Euclidean distance and the elapsed time of the pairs of observations, and must return a numeric vector
+#' with their time-weighted distance. This requires a vectorised function, i.e. a function that returns for
+#' vectors the same values as for one distance and one elapsed time, for example
+#' \code{function(dist, el) dist + 0.1 * el}. Use \code{\link{ifelse}} instead of \code{if} for conditions.
+#' The function is tested with a sample of distances and elapsed times. If it is not vectorised,
+#' \code{\link{twdtw}} is called for each pair of time series and pattern, which is much slower.
+#' The logistic time weight given by its two parameters is the fastest option.
 #'
 #' @return A list with two matrices with one row for each time series in \code{x} and \code{k} columns
 #' ordered from the nearest to the farthest neighbour:
@@ -162,9 +169,9 @@ twdtw_knn <- function(x, y,
     cycle_length <- max_cycle_length(cycle_length, time_scale)
   }
 
-  if (is.function(time_weight)) {
+  if (is.function(time_weight) && !.is_vectorised_time_weight(time_weight, y, tx, cycle_length)) {
 
-    # The batch routine does not call R functions
+    # The time-weight function has to be called for each pair of observations
     out <- .twdtw_knn_loop(x = x,
                            y = y,
                            tx = tx,
@@ -186,17 +193,35 @@ twdtw_knn <- function(x, y,
       storage.mode(x) <- "double"
     }
 
-    # Call twdtw for all time series and patterns
-    out <- twdtw_knn_f90(XM = x,
-                         XD = dim(x),
-                         TX = tx,
-                         YM = YM,
-                         TY = TY,
-                         YO = YO,
-                         TW = as.double(time_weight),
-                         LB = as.double(max_elapsed),
-                         CL = as.double(cycle_length),
-                         K = as.integer(k))
+    if (is.function(time_weight)) {
+
+      # Call the time-weight function once for each pattern and block of time series
+      out <- twdtw_knn_fun_f90(XM = x,
+                               XD = dim(x),
+                               TX = tx,
+                               YM = YM,
+                               TY = TY,
+                               YO = YO,
+                               TW = time_weight,
+                               LB = as.double(max_elapsed),
+                               CL = as.double(cycle_length),
+                               K = as.integer(k))
+
+    } else {
+
+      # Call twdtw for all time series and patterns
+      out <- twdtw_knn_f90(XM = x,
+                           XD = dim(x),
+                           TX = tx,
+                           YM = YM,
+                           TY = TY,
+                           YO = YO,
+                           TW = as.double(time_weight),
+                           LB = as.double(max_elapsed),
+                           CL = as.double(cycle_length),
+                           K = as.integer(k))
+
+    }
 
   }
 
@@ -253,6 +278,46 @@ twdtw_knn <- function(x, y,
   }
 
   list(time = time[keep], values = values[keep, , drop = FALSE])
+
+}
+
+# Internal function
+# Check if a time-weight function is vectorised, i.e. if a call with vectors
+# returns the same values as one call for each pair of distance and elapsed
+# time, which is how twdtw calls the function. The function is tested with a
+# sample of the distances between the observations of two patterns and of the
+# elapsed times between the dates of the time series and a pattern
+.is_vectorised_time_weight <- function(time_weight, y, tx, cycle_length, n = 50) {
+
+  p1 <- y[[1]]
+  p2 <- y[[length(y)]]
+
+  dist <- sqrt(Reduce(`+`, lapply(seq_len(ncol(p1$values)), function(l) {
+    outer(p1$values[, l], p2$values[, l], `-`)^2
+  })))
+
+  el <- abs(outer(tx, p2$time, `-`))
+  el <- pmin(el, cycle_length - el)
+
+  # At least two and at most n pairs of distance and elapsed time
+  n <- max(2, min(n, max(length(dist), length(el))))
+  dist <- as.vector(dist)[round(seq(1, length(dist), length.out = n))]
+  el <- as.vector(el)[round(seq(1, length(el), length.out = n))]
+
+  # A function that is not vectorised can fail or return a single value
+  cost <- tryCatch(time_weight(dist, el),
+                   error = function(e) NULL,
+                   warning = function(w) NULL)
+
+  if (!is.numeric(cost) || length(cost) != n) {
+    return(FALSE)
+  }
+
+  one_by_one <- vapply(seq_len(n), function(i) {
+    as.numeric(time_weight(dist[i], el[i]))[1]
+  }, numeric(1))
+
+  isTRUE(all.equal(as.numeric(cost), one_by_one))
 
 }
 
