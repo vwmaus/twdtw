@@ -24,7 +24,8 @@
 #' 'matches' will return all matches within the TWDTW matrix. 'internals' will return all TWDTW internal data.
 #' @param version A string identifying the version of TWDTW implementation.
 #' Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements,
-#' or 'cpp' for C++ version. Defaults to 'f90'. See details.
+#' or 'cpp' for C++ version. Defaults to 'f90'. The versions 'f90goto' and 'cpp' are
+#' deprecated and will be removed in version 1.2-0. See details.
 #' @param ... ignore
 #'
 #'
@@ -58,9 +59,11 @@
 #' \code{time_weight = function(dist, el) dist + 0.1*el} defines a linear weighting scheme with a slope of 0.1.
 #' A time-weight function can only be used with \code{version = 'f90'}, which is the default.
 #'
-#' The Fortran 90 versions of \code{twdtw} are usually faster than the C++ version.
-#' The '`f90goto`' version, which uses goto statements, is slightly quicker than the
-#' '`f90`' version that uses while and for loops. You can use the `max_elapsed` parameter
+#' The versions '`f90goto`' and '`cpp`' are deprecated and will be removed in version 1.2-0.
+#' They give the same result as the default version '`f90`' for the logistic time weight,
+#' and \code{twdtw} gives a warning once per session if one of them is used.
+#'
+#' You can use the `max_elapsed` parameter
 #' to limit the TWDTW calculation to a maximum elapsed time. This means it will skip
 #' comparisons between pairs of observations in `x` and `y` that are far apart in time.
 #' Be careful, though: if `max_elapsed` is set too low, it could change the results.
@@ -114,19 +117,6 @@
 #'       cycle_length = 'year',
 #'       time_scale = 'day',
 #'       time_weight = function(x,y) x + 1.0 / (1.0 + exp(-0.1 * (y - 50))))
-#'
-#' # Test other version
-#' twdtw(x, y,
-#'       cycle_length = 'year',
-#'       time_scale = 'day',
-#'       time_weight = c(steepness = 0.1, midpoint = 50),
-#'       version = 'f90goto')
-#'
-#' twdtw(x, y,
-#'       cycle_length = 'year',
-#'       time_scale = 'day',
-#'       time_weight = c(steepness = 0.1, midpoint = 50),
-#'       version = 'cpp')
 #'
 #' @include convert_date_to_numeric.R
 #'
@@ -216,10 +206,19 @@ twdtw.matrix <- function(x, y,
     stop("'time_weight' should be either a function or a numeric vector with length two")
   }
 
+  if (!is.character(version) || length(version) != 1 || !version %in% c('f90', 'f90goto', 'cpp')) {
+    stop("Incorrect version. Must be one of 'f90', 'f90goto', 'cpp'")
+  }
+
   # Only the 'f90' version calls a time-weight function. The other versions
   # would ignore the function and use the logistic time weight
   if (is.function(time_weight) && !identical(version, 'f90')) {
     stop("A time-weight function can only be used with version = 'f90'")
+  }
+
+  # The other versions will be removed
+  if (!identical(version, 'f90')) {
+    .warn_deprecated_version()
   }
 
   # Check if 'cycle_length' is declared
@@ -347,3 +346,23 @@ print.twdtw <- function(x, ...) {
   }
 }
 
+# Internal environment that keeps the state of the R session
+.twdtw_session <- new.env(parent = emptyenv())
+
+# Internal function
+# Warn that the versions 'f90goto' and 'cpp' of twdtw are deprecated. The
+# warning is given once per R session, so that it is not repeated for each
+# pair of time series
+.warn_deprecated_version <- function() {
+
+  if (isTRUE(.twdtw_session$deprecated_version_warned)) {
+    return(invisible(NULL))
+  }
+
+  .twdtw_session$deprecated_version_warned <- TRUE
+
+  warning("The versions 'f90goto' and 'cpp' of twdtw are deprecated and will be removed in version 1.2-0. ",
+          "Use the default version 'f90', which gives the same result. ",
+          "This warning is given once per session.", call. = FALSE)
+
+}

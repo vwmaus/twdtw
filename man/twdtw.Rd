@@ -68,7 +68,8 @@ For matrix input, an integer indicating the column with the time index. Defaults
 
 \item{version}{A string identifying the version of TWDTW implementation.
 Options are 'f90' for Fortran 90, 'f90goto' for Fortran 90 with goto statements,
-or 'cpp' for C++ version. Defaults to 'f90'. See details.}
+or 'cpp' for C++ version. Defaults to 'f90'. The versions 'f90goto' and 'cpp' are
+deprecated and will be removed in version 1.2-0. See details.}
 }
 \value{
 An S3 object twdtw either:
@@ -111,9 +112,11 @@ is the elapsed time \eqn{el_{i,j}}. For example,
 \code{time_weight = function(dist, el) dist + 0.1*el} defines a linear weighting scheme with a slope of 0.1.
 A time-weight function can only be used with \code{version = 'f90'}, which is the default.
 
-The Fortran 90 versions of \code{twdtw} are usually faster than the C++ version.
-The '\code{f90goto}' version, which uses goto statements, is slightly quicker than the
-'\code{f90}' version that uses while and for loops. You can use the \code{max_elapsed} parameter
+The versions '\code{f90goto}' and '\code{cpp}' are deprecated and will be removed in version 1.2-0.
+They give the same result as the default version '\code{f90}' for the logistic time weight,
+and \code{twdtw} gives a warning once per session if one of them is used.
+
+You can use the \code{max_elapsed} parameter
 to limit the TWDTW calculation to a maximum elapsed time. This means it will skip
 comparisons between pairs of observations in \code{x} and \code{y} that are far apart in time.
 Be careful, though: if \code{max_elapsed} is set too low, it could change the results.
@@ -150,19 +153,6 @@ twdtw(x, y,
       cycle_length = 'year',
       time_scale = 'day',
       time_weight = function(x,y) x + 1.0 / (1.0 + exp(-0.1 * (y - 50))))
-
-# Test other version
-twdtw(x, y,
-      cycle_length = 'year',
-      time_scale = 'day',
-      time_weight = c(steepness = 0.1, midpoint = 50),
-      version = 'f90goto')
-
-twdtw(x, y,
-      cycle_length = 'year',
-      time_scale = 'day',
-      time_weight = c(steepness = 0.1, midpoint = 50),
-      version = 'cpp')
 
 }
 \references{

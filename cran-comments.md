@@ -40,6 +40,11 @@ of version 1.0-1 was removed or changed.
   without a message and added a constant time weight of 0.5 to the distance of
   each pair of observations.
 
+* The versions 'f90goto' and 'cpp' of `twdtw()` are deprecated. They give the
+  same result as the default version 'f90' and will be removed in version
+  1.2-0. `twdtw()` gives a warning once per session if one of them is used,
+  and stops with an error for an unknown version.
+
 * Adds tests for the new function and for the memory errors, and a larger test
   data set with 999 time series.
 

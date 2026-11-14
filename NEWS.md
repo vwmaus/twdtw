@@ -12,6 +12,8 @@
 
 * `twdtw()` stops with an error if a time-weight function is used with `version = 'f90goto'` or `version = 'cpp'`. These two versions do not call the function: they ignored it without a message and added a constant time weight of 0.5.
 
+* The versions `'f90goto'` and `'cpp'` of `twdtw()` are deprecated and will be removed in version 1.2-0. They give the same result as the default version `'f90'`. `twdtw()` gives a warning once per session if one of them is used.
+
 # version 1.0-1, August 7, 2023
 
 * Minor fixes. Package usage and results are not affected.
