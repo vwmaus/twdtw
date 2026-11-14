@@ -10,9 +10,12 @@ of version 1.0-1 was removed or changed.
   routines, and returns for each time series the k patterns with the lowest
   distance. The distances are the same as the distances calculated with
   `twdtw()`. In our benchmark with 10,000 time series and 5 patterns it was
-  about 120 times faster than calling `twdtw()` for each pair. A time-weight
-  function defined in 'R' is called once for each temporal pattern, and not
-  once for each pair of observations, if the function is vectorised.
+  about 140 times faster than calling `twdtw()` for each pair of data frames,
+  and about 30 times faster than calling `twdtw()` for each pair of numeric
+  matrices. A time-weight function defined in 'R' is called once for each
+  temporal pattern, and not once for each pair of observations, if the
+  function is vectorised. In the benchmark, this was about 25 times faster
+  than calling the function for each pair of observations.
 
 * The function `to_date_time()` is now exported. It was an internal function in
   version 1.0-1.
