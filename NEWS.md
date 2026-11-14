@@ -8,7 +8,7 @@
 
 * Fixes an out-of-bounds write in `twdtw()` if a pattern matched a longer time series more often than the pattern has observations. This could return an incorrect distance, omit matches, or crash R.
 
-* `twdtw()` returns `NA` if every observation of a time series has a missing value, so that no observation is left to compare. Before, it wrote out of bounds in this case, which could crash R. A time series with some missing values is compared as before, using its observations without missing values.
+* `twdtw()` returns `NA` if every observation of a time series has a missing value, so that no observation is left to compare. Before, it wrote out of bounds in this case and returned `Inf`, stopped with an error, or crashed R. A time series with some missing values is compared as before, using its observations without missing values.
 
 * `twdtw()` stops with an error if a time-weight function is used with `version = 'f90goto'` or `version = 'cpp'`. These two versions do not call the function: they ignored it without a message and added a constant time weight of 0.5.
 

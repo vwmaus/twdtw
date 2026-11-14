@@ -32,10 +32,10 @@ of version 1.0-1 was removed or changed.
   observations with missing values and compares the remaining observations. If
   every observation of a time series had a missing value, no observation was
   left, but the 'Fortran' and 'C++' routines still read and wrote the first
-  element of arrays without elements, which could crash R. `twdtw()` now
-  returns `NA` for the distance and no matches in this case, and does not call
-  the compiled routines. Time series with some missing values are compared as
-  before.
+  element of arrays without elements. `twdtw()` then returned `Inf`, stopped
+  with an error, or crashed R. It now returns `NA` for the distance and no
+  matches in this case, and does not call the compiled routines. Time series
+  with some missing values are compared as before.
 
 * `twdtw()` stops with an error if a time-weight function defined in 'R' is
   used with `version = 'f90goto'` or `version = 'cpp'`. Only the default
@@ -64,7 +64,7 @@ update.
 ## Test environments
 
 * Local Ubuntu 24.04.5 LTS, R 4.6.2, GCC and GNU Fortran 13.3.0
-* GitHub Actions, Ubuntu 26.04.1 LTS, R-devel (2026-11-11 r90876)
+* GitHub Actions, Ubuntu 26.04.1 LTS, R-devel (2026-11-12 r90881)
 * GitHub Actions, Ubuntu 26.04.1 LTS, R 4.6.2
 * GitHub Actions, Ubuntu 26.04.1 LTS, R 4.5.3
 * GitHub Actions, macOS Tahoe 26.7.2 (arm64), R 4.6.2
@@ -81,13 +81,27 @@ R configuration of the system, and 'HTML Tidy' not being installed.
 
 ## Reverse dependencies
 
-There is one reverse dependency on CRAN, 'rasterdiv', which imports 'twdtw' and
-calls `twdtw()` for pairs of time series with the same dates. The interface of
-`twdtw()` did not change, and for this kind of input the results of this
-version are identical to the results of version 1.0-1. The only difference is
-a time series in which every observation has a missing value: `twdtw()` now
-returns `NA` for it and wrote out of bounds before. Time series with some
-missing values give the same results as in version 1.0-1.
+There is one reverse dependency on CRAN, 'rasterdiv' 0.3.8, which imports
+'twdtw' and calls `twdtw()` for pairs of time series with the same dates. The
+interface of `twdtw()` did not change. In `R CMD check` with 'twdtw' 1.0-1 and
+with this version, 'rasterdiv' installs and its examples run without error.
+
+The check of 'rasterdiv' does not run its call to `twdtw()`, because its
+examples, tests and vignettes do not evaluate code that uses it. We therefore
+compared the results of this call between version 1.0-1 and this version for
+4,300 random pairs of time series:
+
+* Time series without missing values: the results are identical.
+
+* Time series with some missing values: the results are identical, unless
+  version 1.0-1 wrote out of bounds because of the first memory error. This
+  occurred if there were more matches than observations without missing values
+  in the second time series (317 pairs), and version 1.0-1 then returned an
+  incorrect distance for 185 of them.
+
+* Time series in which every observation has a missing value: version 1.0-1
+  returned `Inf`, stopped with an error, or crashed R. This version returns
+  `NA`.
 
 
 # twdtw-1.0-1
