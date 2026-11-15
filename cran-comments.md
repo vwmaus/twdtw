@@ -1,7 +1,8 @@
 # twdtw-1.1-0
 
-This version adds new features and fixes two memory errors. No function or argument
-of version 1.0-1 was removed or changed.
+This version adds new features, fixes two memory errors, and is 20 to 140 times
+faster than version 1.0-1 on classification tasks with the new function
+`twdtw_knn()`. No function or argument of version 1.0-1 was removed or changed.
 
 ## Changes
 
@@ -9,13 +10,15 @@ of version 1.0-1 was removed or changed.
   time series and a set of temporal patterns in a single call to the 'Fortran'
   routines, and returns for each time series the k patterns with the lowest
   distance. The distances are the same as the distances calculated with
-  `twdtw()`. In our benchmark with 10,000 time series and 5 patterns it was
-  about 140 times faster than calling `twdtw()` for each pair of data frames,
-  and about 30 times faster than calling `twdtw()` for each pair of numeric
-  matrices. A time-weight function defined in 'R' is called once for each
-  temporal pattern, and not once for each pair of observations, if the
-  function is vectorised. In the benchmark, this was about 25 times faster
-  than calling the function for each pair of observations.
+  `twdtw()`. In a benchmark with 10,000 time series and 5 patterns, version
+  1.0-1 took 13 seconds with data frames and 2.8 seconds with numeric
+  matrices, with a call to `twdtw()` for each pair. `twdtw_knn()` took 0.09
+  seconds (about 140 and 30 times faster), or 0.5 and 0.13 seconds with the
+  time to stack the time series into an array (26 and 21 times faster). A
+  time-weight function defined in 'R' is called once for each temporal
+  pattern, and not once for each pair of observations, if the function is
+  vectorised. In the benchmark, this was about 25 times faster than calling
+  the function for each pair of observations.
 
 * The function `to_date_time()` is now exported. It was an internal function in
   version 1.0-1.
@@ -41,7 +44,7 @@ of version 1.0-1 was removed or changed.
   used with `version = 'f90goto'` or `version = 'cpp'`. Only the default
   version, 'f90', calls the function. The other two versions ignored it
   without a message and added a constant time weight of 0.5 to the distance of
-  each pair of observations.
+  each pair of observations, which was semantically incorrect.
 
 * The versions 'f90goto' and 'cpp' of `twdtw()` are deprecated. They give the
   same result as the default version 'f90' and will be removed in version
@@ -57,9 +60,8 @@ The first memory error fixed in this version caused the segmentation fault in th
 tests of 'dtwSat' 1.0.0, which was archived on 2023-10-31
 (<https://cran-archive.r-project.org/web/checks/2023/2023-10-31_check_results_dtwSat.html>).
 The test that failed compares time series with 23 observations to patterns with
-6 observations. We reproduced the segmentation fault with twdtw 1.0-1, and it
-does not occur with this version. We plan to resubmit 'dtwSat' after this
-update.
+6 observations. The segmentation fault that occurred with 'twdtw' 1.0-1 does
+not occur with this version, and 'dtwSat' can be resubmitted after this update.
 
 ## Test environments
 
@@ -72,12 +74,10 @@ update.
 
 ## R CMD check results
 
-There were no ERRORs or WARNINGs.
-
-There were no NOTEs on GitHub Actions. The local check with `--as-cran` returned
-two NOTEs that are caused by the local installation of R and not by the
-package: the compiler flag `-mno-omit-leaf-frame-pointer`, which is set in the
-R configuration of the system, and 'HTML Tidy' not being installed.
+There were no ERRORs, WARNINGs, or NOTEs on GitHub Actions. The local check
+with `--as-cran` returned one NOTE: the compiler flag
+`-mno-omit-leaf-frame-pointer`, which is set in the R configuration of the
+system and not by the package.
 
 ## Reverse dependencies
 
