@@ -16,13 +16,13 @@ has_na <- which(sapply(ts_x$observations, anyNA))
 ids <- sort(unique(c(has_na, seq(1, dim(x)[1], by = 10))))
 
 # Define TWDTW k-nearest neighbours call
-twdtw_knn_call <- function(x, y = patterns, ...) {
-  twdtw_knn(x = x,
-            y = y,
-            time = time,
-            cycle_length = 'year',
-            time_scale = 'day',
-            time_weight = tw, ...)
+twdtw_nearest_call <- function(x, y = patterns, ...) {
+  twdtw_nearest(x = x,
+                y = y,
+                time = time,
+                cycle_length = 'year',
+                time_scale = 'day',
+                time_weight = tw, ...)
 }
 
 # Distance between each pair of time series and pattern calling twdtw for each pair
@@ -45,7 +45,7 @@ k_lowest <- function(distances, k) {
 }
 
 test_that("Nearest neighbor calculation is correct", {
-  knn <- twdtw_knn_call(x)
+  knn <- twdtw_nearest_call(x)
 
   expect_equal(dim(knn$index), c(dim(x)[1], 1))
   expect_equal(dim(knn$distance), c(dim(x)[1], 1))
@@ -56,7 +56,7 @@ test_that("k-nearest neighbours are the same as calling twdtw for each pair", {
   distances <- twdtw_pairs(ids)
 
   for (k in c(1, 2, 3, 5)) {
-    knn <- twdtw_knn_call(x[ids, , , drop = FALSE], k = k)
+    knn <- twdtw_nearest_call(x[ids, , , drop = FALSE], k = k)
     expect_equal(knn, k_lowest(distances, k))
   }
 })
@@ -66,7 +66,7 @@ test_that("k-nearest neighbours are the same as calling twdtw for each pair usin
     distances <- suppressWarnings(twdtw_pairs(ids, max_elapsed = max_elapsed))
 
     for (k in c(1, 5)) {
-      knn <- twdtw_knn_call(x[ids, , , drop = FALSE], k = k, max_elapsed = max_elapsed)
+      knn <- twdtw_nearest_call(x[ids, , , drop = FALSE], k = k, max_elapsed = max_elapsed)
       expect_equal(knn, k_lowest(distances, k))
     }
   }
@@ -90,11 +90,11 @@ test_that("patterns can be matrices with different number of observations", {
     })
   }))
 
-  knn <- twdtw_knn(x = x[ids, , , drop = FALSE], y = y, time = doy, cycle_length = 366, time_weight = tw, k = 3)
+  knn <- twdtw_nearest(x = x[ids, , , drop = FALSE], y = y, time = doy, cycle_length = 366, time_weight = tw, k = 3)
   expect_equal(knn, k_lowest(distances, 3))
 
   # Time index given by its position
-  knn <- twdtw_knn(x = x[ids, , , drop = FALSE], y = y, time = doy, cycle_length = 366, time_weight = tw, k = 3, index_column = 1)
+  knn <- twdtw_nearest(x = x[ids, , , drop = FALSE], y = y, time = doy, cycle_length = 366, time_weight = tw, k = 3, index_column = 1)
   expect_equal(knn, k_lowest(distances, 3))
 })
 
@@ -108,8 +108,8 @@ test_that("results do not depend on the number and the position of the time seri
   x_rep[5, , ] <- x[5, , ]
   x_rep[5, , "EVI"] <- NA
 
-  knn <- twdtw_knn_call(x_rep, k = 2)
-  ref <- twdtw_knn_call(x, k = 2)
+  knn <- twdtw_nearest_call(x_rep, k = 2)
+  ref <- twdtw_nearest_call(x, k = 2)
 
   expect_equal(knn$index[-empty, ], ref$index[id[-empty], ])
   expect_equal(knn$distance[-empty, ], ref$distance[id[-empty], ])
@@ -122,11 +122,11 @@ test_that("results do not depend on the number and the position of the time seri
 test_that("patterns with the same distance are in the order of their position", {
   n <- dim(x)[1]
 
-  knn <- twdtw_knn_call(x, y = patterns[c(1, 1)], k = 2)
+  knn <- twdtw_nearest_call(x, y = patterns[c(1, 1)], k = 2)
   expect_equal(knn$index, cbind(rep(1L, n), rep(2L, n)))
   expect_equal(knn$distance[, 1], knn$distance[, 2])
 
-  knn <- twdtw_knn_call(x, y = patterns[c(1, 1)])
+  knn <- twdtw_nearest_call(x, y = patterns[c(1, 1)])
   expect_equal(knn$index[, 1], rep(1L, n))
 })
 
@@ -136,14 +136,14 @@ test_that("time-weight function returns the same value as the logistic time-weig
   x_small <- x[c(has_na[1:2], 1:4), , , drop = FALSE]
   x_small[6, , ] <- NA
 
-  knn <- twdtw_knn_call(x_small, k = 2)
-  knn_fun <- twdtw_knn(x = x_small,
-                       y = patterns,
-                       time = time,
-                       cycle_length = 'year',
-                       time_scale = 'day',
-                       time_weight = tw_r_fun,
-                       k = 2)
+  knn <- twdtw_nearest_call(x_small, k = 2)
+  knn_fun <- twdtw_nearest(x = x_small,
+                           y = patterns,
+                           time = time,
+                           cycle_length = 'year',
+                           time_scale = 'day',
+                           time_weight = tw_r_fun,
+                           k = 2)
 
   expect_equal(knn_fun, knn)
   expect_true(all(is.na(knn$index[6, ])))
@@ -153,22 +153,22 @@ test_that("row names are the names of the time series", {
   x_named <- x[1:3, , , drop = FALSE]
   dimnames(x_named)[[1]] <- c("a", "b", "c")
 
-  knn <- twdtw_knn_call(x_named)
+  knn <- twdtw_nearest_call(x_named)
   expect_equal(rownames(knn$index), c("a", "b", "c"))
   expect_equal(rownames(knn$distance), c("a", "b", "c"))
 })
 
 test_that("incorrect inputs return an error", {
-  expect_error(twdtw_knn_call(x[1, , ]), "three dimensions")
-  expect_error(twdtw_knn_call(x, k = 0), "'k' must be")
-  expect_error(twdtw_knn_call(x, k = length(patterns) + 1), "'k' must be")
-  expect_error(twdtw_knn_call(x, index_column = "date"), "'index_column' was not found")
-  expect_error(twdtw_knn_call(x, y = lapply(patterns, function(p) p[c("time", "EVI")])), "do not match")
+  expect_error(twdtw_nearest_call(x[1, , ]), "three dimensions")
+  expect_error(twdtw_nearest_call(x, k = 0), "'k' must be")
+  expect_error(twdtw_nearest_call(x, k = length(patterns) + 1), "'k' must be")
+  expect_error(twdtw_nearest_call(x, index_column = "date"), "'index_column' was not found")
+  expect_error(twdtw_nearest_call(x, y = lapply(patterns, function(p) p[c("time", "EVI")])), "do not match")
 
-  expect_error(twdtw_knn(x = x, y = patterns, time = time[-1], cycle_length = 'year',
-                         time_scale = 'day', time_weight = tw), "length of 'time'")
+  expect_error(twdtw_nearest(x = x, y = patterns, time = time[-1], cycle_length = 'year',
+                             time_scale = 'day', time_weight = tw), "length of 'time'")
 
   empty_pattern <- patterns
   empty_pattern[[2]]$EVI <- NA
-  expect_error(twdtw_knn_call(x, y = empty_pattern), "no complete observations")
+  expect_error(twdtw_nearest_call(x, y = empty_pattern), "no complete observations")
 })

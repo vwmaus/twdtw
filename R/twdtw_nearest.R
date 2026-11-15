@@ -77,37 +77,37 @@
 #' dim(x)
 #'
 #' # Find the nearest pattern for each time series
-#' knn <- twdtw_knn(x = x,
-#'                  y = ts_y$observations,
-#'                  time = ts_x$observations[[1]]$time,
-#'                  cycle_length = 'year',
-#'                  time_scale = 'day',
-#'                  time_weight = c(steepness = 0.1, midpoint = 50))
+#' knn <- twdtw_nearest(x = x,
+#'                      y = ts_y$observations,
+#'                      time = ts_x$observations[[1]]$time,
+#'                      cycle_length = 'year',
+#'                      time_scale = 'day',
+#'                      time_weight = c(steepness = 0.1, midpoint = 50))
 #'
 #' table(ts_y$label[knn$index[, 1]])
 #'
 #' # Find the two nearest patterns and their distances
-#' knn <- twdtw_knn(x = x,
-#'                  y = ts_y$observations,
-#'                  time = ts_x$observations[[1]]$time,
-#'                  cycle_length = 'year',
-#'                  time_scale = 'day',
-#'                  time_weight = c(steepness = 0.1, midpoint = 50),
-#'                  k = 2)
+#' knn <- twdtw_nearest(x = x,
+#'                      y = ts_y$observations,
+#'                      time = ts_x$observations[[1]]$time,
+#'                      cycle_length = 'year',
+#'                      time_scale = 'day',
+#'                      time_weight = c(steepness = 0.1, midpoint = 50),
+#'                      k = 2)
 #'
 #' head(knn$index)
 #' head(knn$distance)
 #'
 #' @export
-twdtw_knn <- function(x, y,
-                      time,
-                      time_weight,
-                      cycle_length,
-                      time_scale = NULL,
-                      k = 1,
-                      origin = NULL,
-                      index_column = 'time',
-                      max_elapsed = Inf) {
+twdtw_nearest <- function(x, y,
+                          time,
+                          time_weight,
+                          cycle_length,
+                          time_scale = NULL,
+                          k = 1,
+                          origin = NULL,
+                          index_column = 'time',
+                          max_elapsed = Inf) {
 
   # Check that 'x' is an array with the time series
   if (!is.numeric(x) || length(dim(x)) != 3) {
@@ -172,13 +172,13 @@ twdtw_knn <- function(x, y,
   if (is.function(time_weight) && !.is_vectorised_time_weight(time_weight, y, tx, cycle_length)) {
 
     # The time-weight function has to be called for each pair of observations
-    out <- .twdtw_knn_loop(x = x,
-                           y = y,
-                           tx = tx,
-                           time_weight = time_weight,
-                           cycle_length = cycle_length,
-                           max_elapsed = max_elapsed,
-                           k = k)
+    out <- .twdtw_nearest_loop(x = x,
+                               y = y,
+                               tx = tx,
+                               time_weight = time_weight,
+                               cycle_length = cycle_length,
+                               max_elapsed = max_elapsed,
+                               k = k)
 
   } else {
 
@@ -196,30 +196,30 @@ twdtw_knn <- function(x, y,
     if (is.function(time_weight)) {
 
       # Call the time-weight function once for each pattern and block of time series
-      out <- twdtw_knn_fun_f90(XM = x,
+      out <- twdtw_nearest_fun_f90(XM = x,
+                                   XD = dim(x),
+                                   TX = tx,
+                                   YM = YM,
+                                   TY = TY,
+                                   YO = YO,
+                                   TW = time_weight,
+                                   LB = as.double(max_elapsed),
+                                   CL = as.double(cycle_length),
+                                   K = as.integer(k))
+
+    } else {
+
+      # Call twdtw for all time series and patterns
+      out <- twdtw_nearest_f90(XM = x,
                                XD = dim(x),
                                TX = tx,
                                YM = YM,
                                TY = TY,
                                YO = YO,
-                               TW = time_weight,
+                               TW = as.double(time_weight),
                                LB = as.double(max_elapsed),
                                CL = as.double(cycle_length),
                                K = as.integer(k))
-
-    } else {
-
-      # Call twdtw for all time series and patterns
-      out <- twdtw_knn_f90(XM = x,
-                           XD = dim(x),
-                           TX = tx,
-                           YM = YM,
-                           TY = TY,
-                           YO = YO,
-                           TW = as.double(time_weight),
-                           LB = as.double(max_elapsed),
-                           CL = as.double(cycle_length),
-                           K = as.integer(k))
 
     }
 
@@ -323,7 +323,7 @@ twdtw_knn <- function(x, y,
 
 # Internal function
 # Find the k-nearest neighbours calling twdtw for each time series and pattern
-.twdtw_knn_loop <- function(x, y, tx, time_weight, cycle_length, max_elapsed, k) {
+.twdtw_nearest_loop <- function(x, y, tx, time_weight, cycle_length, max_elapsed, k) {
 
   index <- matrix(NA_integer_, nrow = dim(x)[1], ncol = k)
   distance <- matrix(NA_real_, nrow = dim(x)[1], ncol = k)

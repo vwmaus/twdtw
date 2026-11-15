@@ -1,4 +1,4 @@
-! Time weights for the batch computation of TWDTW, see twdtwknn
+! Time weights for the batch computation of TWDTW, see twdtwnearest
 !
 ! Computes the logistic time weight between each observation of the temporal
 ! patterns and each date of the time series. As the time series share the same
@@ -14,7 +14,7 @@
 ! LB - Maximum elapsed time to constrain TWDTW calculation
 ! CL - The length of the time cycle
 ! W  - Output time weights (NT,NY)
-subroutine twdtwknn_weights(TX, NT, TY, NY, TW, LB, CL, W) bind(C, name="twdtwknn_weights")
+subroutine twdtwnearest_weights(TX, NT, TY, NY, TW, LB, CL, W) bind(C, name="twdtwnearest_weights")
   use, intrinsic :: ieee_arithmetic
   use, intrinsic :: iso_c_binding
   implicit none
@@ -39,7 +39,7 @@ subroutine twdtwknn_weights(TX, NT, TY, NY, TW, LB, CL, W) bind(C, name="twdtwkn
       end if
     end do
   end do
-end subroutine twdtwknn_weights
+end subroutine twdtwnearest_weights
 
 
 ! Batch computation of the TWDTW k-nearest neighbours
@@ -68,13 +68,13 @@ end subroutine twdtwknn_weights
 ! YO   - Row offset of each temporal pattern in YM (NP+1), pattern I is in rows YO(I)+1 to YO(I+1)
 ! NY   - Number of observations of all temporal patterns
 ! NP   - Number of temporal patterns
-! WU   - Time weights without maximum elapsed time constraint (NT,NY), see twdtwknn_weights
-! WL   - Time weights constrained by the maximum elapsed time (NT,NY), see twdtwknn_weights
+! WU   - Time weights without maximum elapsed time constraint (NT,NY), see twdtwnearest_weights
+! WL   - Time weights constrained by the maximum elapsed time (NT,NY), see twdtwnearest_weights
 ! K    - Number of nearest neighbours
 ! KI   - Output index of the K nearest patterns (NS,K), not modified for time series without observations
 ! KD   - Output distance to the K nearest patterns (NS,K), not modified for time series without observations
 ! IERR - Output error flag, zero if the work arrays were allocated
-subroutine twdtwknn(XM, NS, NT, ND, P1, P2, YM, YO, NY, NP, WU, WL, K, KI, KD, IERR) bind(C, name="twdtwknn")
+subroutine twdtwnearest(XM, NS, NT, ND, P1, P2, YM, YO, NY, NP, WU, WL, K, KI, KD, IERR) bind(C, name="twdtwnearest")
   use, intrinsic :: ieee_arithmetic
   use, intrinsic :: iso_c_binding
   implicit none
@@ -204,14 +204,14 @@ subroutine twdtwknn(XM, NS, NT, ND, P1, P2, YM, YO, NY, NP, WU, WL, K, KI, KD, I
   end do
 
   deallocate(XB, DT, CR, BD, JX, BI)
-end subroutine twdtwknn
+end subroutine twdtwnearest
 
 
 ! Local distance for the batch computation of TWDTW with a time-weight function
 !
 ! Computes the Euclidean distance between each observation of a block of time
 ! series and each observation of one temporal pattern. This is the distance
-! that a time-weight function receives, see twdtwknn_cost. Observations of a
+! that a time-weight function receives, see twdtwnearest_cost. Observations of a
 ! time series with a missing value (NaN) in any dimension are flagged in OK
 ! and have distance zero.
 !
@@ -227,7 +227,7 @@ end subroutine twdtwknn
 ! Y2 - Last row of the temporal pattern in YM
 ! DM - Output local distance (P2-P1+1,NT,Y2-Y1+1)
 ! OK - Output flag of the observations of the time series (P2-P1+1,NT), one if complete and zero otherwise
-subroutine twdtwknn_dist(XM, NS, NT, ND, P1, P2, YM, NY, Y1, Y2, DM, OK) bind(C, name="twdtwknn_dist")
+subroutine twdtwnearest_dist(XM, NS, NT, ND, P1, P2, YM, NY, Y1, Y2, DM, OK) bind(C, name="twdtwnearest_dist")
   use, intrinsic :: ieee_arithmetic
   use, intrinsic :: iso_c_binding
   implicit none
@@ -267,7 +267,7 @@ subroutine twdtwknn_dist(XM, NS, NT, ND, P1, P2, YM, NY, Y1, Y2, DM, OK) bind(C,
       end do
     end do
   end do
-end subroutine twdtwknn_dist
+end subroutine twdtwnearest_dist
 
 
 ! Batch computation of TWDTW for one temporal pattern given the local cost
@@ -279,7 +279,7 @@ end subroutine twdtwknn_dist
 ! the time series and each observation of the pattern. Call this subroutine
 ! once for each pattern, in the order of the patterns.
 !
-! The cumulative cost is computed as in twdtwknn. However, the computation
+! The cumulative cost is computed as in twdtwnearest. However, the computation
 ! never stops before the last observation of the pattern, because the cost
 ! given by a time-weight function can be negative.
 !
@@ -287,7 +287,7 @@ end subroutine twdtwknn_dist
 ! NB   - Number of time series in the block
 ! NT   - Number of dates of the time series
 ! NI   - Number of observations of the temporal pattern
-! OK   - Flag of the observations of the time series (NB,NT), one if complete, see twdtwknn_dist
+! OK   - Flag of the observations of the time series (NB,NT), one if complete, see twdtwnearest_dist
 ! EL   - Elapsed time between each date of the time series and each observation of the pattern (NT,NI)
 ! LB   - Maximum elapsed time to constrain TWDTW calculation
 ! IP   - Index of the temporal pattern
@@ -298,7 +298,7 @@ end subroutine twdtwknn_dist
 ! KI   - Index of the K nearest patterns (NS,K), updated
 ! KD   - Distance to the K nearest patterns in ascending order (NS,K), updated
 ! IERR - Output error flag, zero if the work arrays were allocated
-subroutine twdtwknn_cost(CM, NB, NT, NI, OK, EL, LB, IP, K, NS, P1, KN, KI, KD, IERR) bind(C, name="twdtwknn_cost")
+subroutine twdtwnearest_cost(CM, NB, NT, NI, OK, EL, LB, IP, K, NS, P1, KN, KI, KD, IERR) bind(C, name="twdtwnearest_cost")
   use, intrinsic :: ieee_arithmetic
   use, intrinsic :: iso_c_binding
   implicit none
@@ -395,4 +395,4 @@ subroutine twdtwknn_cost(CM, NB, NT, NI, OK, EL, LB, IP, K, NS, P1, KN, KI, KD, 
   end do
 
   deallocate(CR, JX)
-end subroutine twdtwknn_cost
+end subroutine twdtwnearest_cost

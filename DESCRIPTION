@@ -39,7 +39,7 @@ Collate:
     'init.R'
     'plot_cost_matrix.R'
     'twdtw.R'
-    'twdtw_knn.R'
+    'twdtw_nearest.R'
     'zzz.R'
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.1

@@ -32,13 +32,13 @@ tw_infinite <- function(dist, el) ifelse(el > 45, Inf, dist + 0.02 * el)
 tw_none <- function(dist, el) dist
 
 # Define TWDTW k-nearest neighbours call
-twdtw_knn_call <- function(x, time_weight, y = patterns, ...) {
-  twdtw_knn(x = x,
-            y = y,
-            time = time,
-            cycle_length = 'year',
-            time_scale = 'day',
-            time_weight = time_weight, ...)
+twdtw_nearest_call <- function(x, time_weight, y = patterns, ...) {
+  twdtw_nearest(x = x,
+                y = y,
+                time = time,
+                cycle_length = 'year',
+                time_scale = 'day',
+                time_weight = time_weight, ...)
 }
 
 # Distance between each pair of time series and pattern calling twdtw for each pair
@@ -78,7 +78,7 @@ record_calls <- function(time_weight) {
 
 test_that("a vectorised time-weight function is called once for each pattern", {
   recorded <- record_calls(tw_linear)
-  knn <- twdtw_knn_call(x[ids, , , drop = FALSE], recorded$time_weight)
+  knn <- twdtw_nearest_call(x[ids, , , drop = FALSE], recorded$time_weight)
 
   # One call for each pattern with all pairs of observations, after the calls that test the function
   n_pairs <- length(ids) * length(time) * sapply(patterns, nrow)
@@ -90,7 +90,7 @@ test_that("a time-weight function that is not vectorised is called for each pair
   x_small <- x[ids[1:12], , , drop = FALSE]
 
   recorded <- record_calls(tw_if)
-  knn <- twdtw_knn_call(x_small, recorded$time_weight)
+  knn <- twdtw_nearest_call(x_small, recorded$time_weight)
 
   # The first call tests the function with vectors, all other calls have one pair of observations
   expect_gt(recorded$calls$lengths[1], 1)
@@ -98,7 +98,7 @@ test_that("a time-weight function that is not vectorised is called for each pair
   expect_gt(recorded$calls$n, dim(x_small)[1] * length(time))
 
   # The result is the same as for the vectorised function
-  expect_equal(knn, twdtw_knn_call(x_small, tw_ifelse))
+  expect_equal(knn, twdtw_nearest_call(x_small, tw_ifelse))
 })
 
 test_that("k-nearest neighbours are the same as calling twdtw for each pair", {
@@ -106,7 +106,7 @@ test_that("k-nearest neighbours are the same as calling twdtw for each pair", {
     distances <- twdtw_pairs(ids, time_weight)
 
     for (k in c(1, 3, 5)) {
-      knn <- twdtw_knn_call(x[ids, , , drop = FALSE], time_weight, k = k)
+      knn <- twdtw_nearest_call(x[ids, , , drop = FALSE], time_weight, k = k)
       expect_equal(knn, k_lowest(distances, k))
     }
   }
@@ -114,13 +114,13 @@ test_that("k-nearest neighbours are the same as calling twdtw for each pair", {
 
 test_that("k-nearest neighbours are the same as calling twdtw for each pair using max_elapsed", {
   # Without a time weight, the distances depend on the maximum elapsed time
-  unconstrained <- twdtw_knn_call(x[ids, , , drop = FALSE], tw_none, k = 5)
+  unconstrained <- twdtw_nearest_call(x[ids, , , drop = FALSE], tw_none, k = 5)
 
   for (max_elapsed in c(20, 30, 90)) {
     distances <- suppressWarnings(twdtw_pairs(ids, tw_none, max_elapsed = max_elapsed))
 
     for (k in c(1, 5)) {
-      knn <- twdtw_knn_call(x[ids, , , drop = FALSE], tw_none, k = k, max_elapsed = max_elapsed)
+      knn <- twdtw_nearest_call(x[ids, , , drop = FALSE], tw_none, k = k, max_elapsed = max_elapsed)
       expect_equal(knn, k_lowest(distances, k))
     }
 
@@ -131,7 +131,7 @@ test_that("k-nearest neighbours are the same as calling twdtw for each pair usin
 
 test_that("a time-weight function can return infinite values", {
   distances <- suppressWarnings(twdtw_pairs(ids, tw_infinite))
-  knn <- twdtw_knn_call(x[ids, , , drop = FALSE], tw_infinite, k = 5)
+  knn <- twdtw_nearest_call(x[ids, , , drop = FALSE], tw_infinite, k = 5)
 
   expect_equal(knn, k_lowest(distances, 5))
 })
@@ -154,7 +154,7 @@ test_that("patterns can be matrices with different number of observations", {
     })
   }))
 
-  knn <- twdtw_knn(x = x[ids, , , drop = FALSE], y = y, time = doy, cycle_length = 366, time_weight = tw_linear, k = 3)
+  knn <- twdtw_nearest(x = x[ids, , , drop = FALSE], y = y, time = doy, cycle_length = 366, time_weight = tw_linear, k = 3)
   expect_equal(knn, k_lowest(distances, 3))
 })
 
@@ -169,8 +169,8 @@ test_that("results do not depend on the number and the position of the time seri
   x_rep[5, , ] <- x[5, , ]
   x_rep[5, , "EVI"] <- NA
 
-  knn <- twdtw_knn_call(x_rep, tw_linear, k = 2)
-  ref <- twdtw_knn_call(x, tw_linear, k = 2)
+  knn <- twdtw_nearest_call(x_rep, tw_linear, k = 2)
+  ref <- twdtw_nearest_call(x, tw_linear, k = 2)
 
   expect_equal(knn$index[-empty, ], ref$index[id[-empty], ])
   expect_equal(knn$distance[-empty, ], ref$distance[id[-empty], ])
@@ -183,12 +183,12 @@ test_that("results do not depend on the number and the position of the time seri
 test_that("patterns with the same distance are in the order of their position", {
   n <- dim(x)[1]
 
-  knn <- twdtw_knn_call(x, tw_linear, y = patterns[c(1, 1)], k = 2)
+  knn <- twdtw_nearest_call(x, tw_linear, y = patterns[c(1, 1)], k = 2)
   expect_equal(knn$index, cbind(rep(1L, n), rep(2L, n)))
   expect_equal(knn$distance[, 1], knn$distance[, 2])
 })
 
 test_that("a time-weight function that returns missing values is an error", {
-  expect_error(twdtw_knn_call(x[ids, , , drop = FALSE], function(dist, el) dist + NA_real_),
+  expect_error(twdtw_nearest_call(x[ids, , , drop = FALSE], function(dist, el) dist + NA_real_),
                "returned missing values")
 })

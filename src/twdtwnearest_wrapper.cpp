@@ -7,19 +7,19 @@ using namespace Rcpp;
 // Forward declaration of the Fortran functions
 extern "C" {
 
-  void twdtwknn_weights(double* TX, int* NT, double* TY, int* NY, double* TW,
-                        double* LB, double* CL, double* W);
+  void twdtwnearest_weights(double* TX, int* NT, double* TY, int* NY, double* TW,
+                            double* LB, double* CL, double* W);
 
-  void twdtwknn(double* XM, int* NS, int* NT, int* ND, int* P1, int* P2,
-                double* YM, int* YO, int* NY, int* NP, double* WU, double* WL,
-                int* K, int* KI, double* KD, int* IERR);
+  void twdtwnearest(double* XM, int* NS, int* NT, int* ND, int* P1, int* P2,
+                    double* YM, int* YO, int* NY, int* NP, double* WU, double* WL,
+                    int* K, int* KI, double* KD, int* IERR);
 
-  void twdtwknn_dist(double* XM, int* NS, int* NT, int* ND, int* P1, int* P2,
-                     double* YM, int* NY, int* Y1, int* Y2, double* DM, int* OK);
+  void twdtwnearest_dist(double* XM, int* NS, int* NT, int* ND, int* P1, int* P2,
+                         double* YM, int* NY, int* Y1, int* Y2, double* DM, int* OK);
 
-  void twdtwknn_cost(double* CM, int* NB, int* NT, int* NI, int* OK, double* EL,
-                     double* LB, int* IP, int* K, int* NS, int* P1,
-                     int* KN, int* KI, double* KD, int* IERR);
+  void twdtwnearest_cost(double* CM, int* NB, int* NT, int* NI, int* OK, double* EL,
+                         double* LB, int* IP, int* K, int* NS, int* P1,
+                         int* KN, int* KI, double* KD, int* IERR);
 }
 
 /**
@@ -40,9 +40,9 @@ extern "C" {
  *         distance (NS,K). Time series without observations have NA.
  */
 // [[Rcpp::export]]
-List twdtw_knn_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
-                   NumericMatrix YM, NumericVector TY, IntegerVector YO,
-                   NumericVector TW, double LB, double CL, int K) {
+List twdtw_nearest_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
+                       NumericMatrix YM, NumericVector TY, IntegerVector YO,
+                       NumericVector TW, double LB, double CL, int K) {
 
   // The Fortran code does not check array bounds
   if (XD.size() != 3) {
@@ -78,13 +78,13 @@ List twdtw_knn_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
   // the maximum elapsed time are only needed if the constraint is active
   double INF = R_PosInf;
   std::vector<double> WU(static_cast<std::size_t>(NT) * NY);
-  twdtwknn_weights(TX.begin(), &NT, TY.begin(), &NY, TW.begin(), &INF, &CL, WU.data());
+  twdtwnearest_weights(TX.begin(), &NT, TY.begin(), &NY, TW.begin(), &INF, &CL, WU.data());
 
   std::vector<double> WC;
   double* WL = WU.data();
   if (LB != R_PosInf) {
     WC.resize(WU.size());
-    twdtwknn_weights(TX.begin(), &NT, TY.begin(), &NY, TW.begin(), &LB, &CL, WC.data());
+    twdtwnearest_weights(TX.begin(), &NT, TY.begin(), &NY, TW.begin(), &LB, &CL, WC.data());
     WL = WC.data();
   }
 
@@ -103,8 +103,8 @@ List twdtw_knn_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
   for (R_xlen_t first = 1; first <= NS; first += block) {
     int P1 = static_cast<int>(first);
     int P2 = static_cast<int>(std::min<R_xlen_t>(NS, first + block - 1));
-    twdtwknn(XM.begin(), &NS, &NT, &ND, &P1, &P2, YM.begin(), YO.begin(), &NY, &NP,
-             WU.data(), WL, &K, KI.begin(), KD.begin(), &IERR);
+    twdtwnearest(XM.begin(), &NS, &NT, &ND, &P1, &P2, YM.begin(), YO.begin(), &NY, &NP,
+                 WU.data(), WL, &K, KI.begin(), KD.begin(), &IERR);
     if (IERR != 0) {
       stop("Could not allocate memory to compute TWDTW");
     }
@@ -140,9 +140,9 @@ List twdtw_knn_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
  *         distance (NS,K). Time series without observations have NA.
  */
 // [[Rcpp::export]]
-List twdtw_knn_fun_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
-                       NumericMatrix YM, NumericVector TY, IntegerVector YO,
-                       Function TW, double LB, double CL, int K) {
+List twdtw_nearest_fun_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
+                           NumericMatrix YM, NumericVector TY, IntegerVector YO,
+                           Function TW, double LB, double CL, int K) {
 
   // The Fortran code does not check array bounds
   if (XD.size() != 3) {
@@ -209,8 +209,8 @@ List twdtw_knn_fun_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
 
       // Local distance and elapsed time of each pair of observations
       NumericVector DM(n), EM(n);
-      twdtwknn_dist(XM.begin(), &NS, &NT, &ND, &P1, &P2, YM.begin(), &NY, &Y1, &Y2,
-                    DM.begin(), OK.data());
+      twdtwnearest_dist(XM.begin(), &NS, &NT, &ND, &P1, &P2, YM.begin(), &NY, &Y1, &Y2,
+                        DM.begin(), OK.data());
 
       const double* EP = EL.data() + static_cast<std::size_t>(Y1 - 1) * NT;
       R_xlen_t pos = 0;
@@ -243,8 +243,8 @@ List twdtw_knn_fun_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
         }
       }
 
-      twdtwknn_cost(CM.begin(), &NB, &NT, &NI, OK.data(), const_cast<double*>(EP), &LB,
-                    &IP, &K, &NS, &P1, KN.data(), KI.begin(), KD.begin(), &IERR);
+      twdtwnearest_cost(CM.begin(), &NB, &NT, &NI, OK.data(), const_cast<double*>(EP), &LB,
+                        &IP, &K, &NS, &P1, KN.data(), KI.begin(), KD.begin(), &IERR);
       if (IERR != 0) {
         stop("Could not allocate memory to compute TWDTW");
       }

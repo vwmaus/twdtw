@@ -1,12 +1,12 @@
 # version 1.1-0, November 15, 2026
 
-* Faster classification of time series. Version 1.1-0 is 20 to 140 times faster than version 1.0-1 on classification tasks with the new function `twdtw_knn()`. Assigning 10,000 time series (23 observations, 6 bands) to the nearest of 5 temporal patterns took 13 seconds in version 1.0-1. In version 1.1-0, it took 0.5 seconds starting from the same data frames, and 0.09 seconds for time series that are already in an array.
+* Faster classification of time series. Version 1.1-0 is 20 to 140 times faster than version 1.0-1 on classification tasks with the new function `twdtw_nearest()`. Assigning 10,000 time series (23 observations, 6 bands) to the nearest of 5 temporal patterns took 13 seconds in version 1.0-1. In version 1.1-0, it took 0.5 seconds starting from the same data frames, and 0.09 seconds for time series that are already in an array.
 
-* New function `twdtw_knn()`. It calculates the TWDTW distance between a set of time series and a set of temporal patterns in a single call to the Fortran routines, and returns for each time series the k patterns with the lowest distance. The distances are the same as the distances calculated with `twdtw()`.
+* New function `twdtw_nearest()`. It calculates the TWDTW distance between a set of time series and a set of temporal patterns in a single call to the Fortran routines, and returns for each time series the k patterns with the lowest distance. The distances are the same as the distances calculated with `twdtw()`.
 
-* Details of the benchmark: version 1.0-1 was timed with a call to `twdtw()` for each time series and each pattern, which took 13 seconds with data frames and 2.8 seconds with numeric matrices. `twdtw_knn()` calculated the same distances in 0.09 seconds, about 140 and 30 times faster. It takes the time series as an array. Stacking them into this array took 0.4 seconds for the data frames and 0.03 seconds for the matrices, so that the whole task was 26 and 21 times faster. `twdtw()` has the same speed as in version 1.0-1.
+* Details of the benchmark: version 1.0-1 was timed with a call to `twdtw()` for each time series and each pattern, which took 13 seconds with data frames and 2.8 seconds with numeric matrices. `twdtw_nearest()` calculated the same distances in 0.09 seconds, about 140 and 30 times faster. It takes the time series as an array. Stacking them into this array took 0.4 seconds for the data frames and 0.03 seconds for the matrices, so that the whole task was 26 and 21 times faster. `twdtw()` has the same speed as in version 1.0-1.
 
-* `twdtw_knn()` calls a time-weight function defined in R once for each temporal pattern, and not once for each pair of observations, if the function is vectorised. In the same benchmark, this was about 25 times faster than a function that is not vectorised. The logistic time weight is the fastest option, about 7 times faster than a vectorised function.
+* `twdtw_nearest()` calls a time-weight function defined in R once for each temporal pattern, and not once for each pair of observations, if the function is vectorised. In the same benchmark, this was about 25 times faster than a function that is not vectorised. The logistic time weight is the fastest option, about 7 times faster than a vectorised function.
 
 * The function `to_date_time()` is now exported.
 
