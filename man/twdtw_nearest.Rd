@@ -68,6 +68,9 @@ of time series and pattern. However, all time series are processed in a single c
 and only the distances are calculated. This is much faster than calling \code{\link{twdtw}} for each pair
 and suitable for a large number of time series, e.g. the pixels of satellite images.
 The matches and the internal matrices are not available, use \code{\link{twdtw}} for that.
+The function returns the position of the nearest patterns and has no labels. To classify time series
+with the labels of their nearest patterns, create a model with \code{\link{twdtw_knn}}, which
+calls this function.
 
 The band names of \code{x}, i.e. \code{dimnames(x)[[3]]}, are matched to the column names of the patterns in \code{y}.
 If either of them has no names, the bands are matched by their position.
@@ -135,5 +138,5 @@ IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing
 \doi{10.1109/JSTARS.2016.2517118}
 }
 \seealso{
-\code{\link{twdtw}}
+\code{\link{twdtw_knn}}, \code{\link{twdtw}}
 }

@@ -38,7 +38,10 @@ Collate:
     'convert_date_to_numeric.R'
     'init.R'
     'plot_cost_matrix.R'
+    'time_series_formats.R'
     'twdtw.R'
+    'twdtw_knn.R'
+    'twdtw_knn_predict.R'
     'twdtw_nearest.R'
     'zzz.R'
 Config/testthat/edition: 3
