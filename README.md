@@ -19,8 +19,64 @@ time series of various resolutions. It is particularly suitable for comparing
 time series with seasonality for environmental and ecological data analysis, 
 covering domains such as remote sensing imagery, climate data, hydrology, 
 and animal movement. The 'twdtw' package offers a user-friendly 'R' interface, 
-efficient 'Fortran' routines for TWDTW calculations, flexible time weighting 
-definitions, as well as utilities for time series preprocessing and visualization.
+efficient 'Fortran' routines for TWDTW calculations, a k-nearest neighbour model 
+to classify time series, flexible time weighting definitions, as well as utilities 
+for time series preprocessing and visualization.
+
+# Installation
+
+```r
+# Released version from CRAN
+install.packages("twdtw")
+
+# Development version from GitHub
+# install.packages("remotes")
+remotes::install_github("vwmaus/twdtw")
+```
+
+# Usage
+
+The TWDTW distance between two time series:
+
+```r
+library(twdtw)
+
+n <- 23
+t <- seq(0, pi, length.out = n)
+d <- seq(as.Date("2020-09-01"), length.out = n, by = "15 day")
+
+x <- data.frame(time = d, v1 = sin(t) * 2 + runif(n))
+y <- data.frame(time = d + 30, v1 = sin(t) * 2 + runif(n))
+
+twdtw(x, y,
+      cycle_length = "year",
+      time_scale = "day",
+      time_weight = c(steepness = 0.1, midpoint = 50))
+```
+
+Classification of time series with a k-nearest neighbour model, available from version 1.1-0:
+
+```r
+# Temporal patterns of 5 land use classes and satellite image time series of 999 pixels
+ts_y <- readRDS(system.file("sits/modis_mod13q1_patterns.rds", package = "twdtw"))
+ts_x <- readRDS(system.file("sits/modis_mod13q1_999ts.rds", package = "twdtw"))
+
+# Create the model from the labelled time series
+m <- twdtw_knn(x = ts_y$observations,
+               y = ts_y$label,
+               cycle_length = "year",
+               time_scale = "day",
+               time_weight = c(steepness = 0.1, midpoint = 50))
+
+# Classify each time series with the label of its nearest temporal pattern
+lu <- predict(m, newdata = ts_x$observations)
+
+table(lu$prediction)
+```
+
+The help pages of `twdtw_knn()` and `predict.twdtw_knn()` describe models with several
+temporal patterns for each label, the number of nearest patterns `k`, the votes, and the
+types of prediction.
 
 # References
 

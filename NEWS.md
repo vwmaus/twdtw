@@ -1,12 +1,18 @@
 # version 1.1-0, November 15, 2026
 
-* Faster classification of time series. Version 1.1-0 is 20 to 140 times faster than version 1.0-1 on classification tasks with the new function `twdtw_nearest()`. Assigning 10,000 time series (23 observations, 6 bands) to the nearest of 5 temporal patterns took 13 seconds in version 1.0-1. In version 1.1-0, it took 0.5 seconds starting from the same data frames, and 0.09 seconds for time series that are already in an array.
+* Faster classification of time series. Version 1.1-0 is 20 to 140 times faster than version 1.0-1 on classification tasks with the new model `twdtw_knn()`. Assigning 10,000 time series (23 observations, 6 bands) to the nearest of 5 temporal patterns took 13 seconds in version 1.0-1. In version 1.1-0, it took 0.17 seconds starting from the same data frames, and 0.09 seconds for time series that are already in an array.
 
-* New function `twdtw_nearest()`. It calculates the TWDTW distance between a set of time series and a set of temporal patterns in a single call to the Fortran routines, and returns for each time series the k patterns with the lowest distance. The distances are the same as the distances calculated with `twdtw()`.
+* New function `twdtw_knn()`. It creates a k-nearest neighbour model from labelled time series, and `predict()` classifies time series with the labels of their nearest temporal patterns. The time series can be a list of data frames or matrices, a data frame with one column for each band and date, or an array. The model keeps all labelled time series as temporal patterns, or creates one pattern for each label with a resampling function.
 
-* Details of the benchmark: version 1.0-1 was timed with a call to `twdtw()` for each time series and each pattern, which took 13 seconds with data frames and 2.8 seconds with numeric matrices. `twdtw_nearest()` calculated the same distances in 0.09 seconds, about 140 and 30 times faster. It takes the time series as an array. Stacking them into this array took 0.4 seconds for the data frames and 0.03 seconds for the matrices, so that the whole task was 26 and 21 times faster. `twdtw()` has the same speed as in version 1.0-1.
+* `predict()` uses the `k` nearest temporal patterns of each time series, by default only the nearest. `vote` sets how their votes are counted: one vote for each pattern (`"majority"`, the default) or votes with the weight 1/distance (`"weighted"`). `type` sets the result: the label with the most votes (`"class"`, the default), the share of the votes of each label (`"prob"`), or the labels and the distances of the nearest patterns (`"neighbors"`).
 
-* `twdtw_nearest()` calls a time-weight function defined in R once for each temporal pattern, and not once for each pair of observations, if the function is vectorised. In the same benchmark, this was about 25 times faster than a function that is not vectorised. The logistic time weight is the fastest option, about 7 times faster than a vectorised function.
+* New function `twdtw_nearest()`. It calculates the TWDTW distance between a set of time series and a set of temporal patterns in a single call to the Fortran routines, and returns for each time series the k patterns with the lowest distance. The distances are the same as the distances calculated with `twdtw()`. `predict()` calls this function to find the nearest patterns.
+
+* New generic function `twdtw_knn_predict()`, which `predict()` calls with the time series. Other packages can add methods to it to classify their own classes of time series.
+
+* Details of the benchmark: version 1.0-1 was timed with a call to `twdtw()` for each time series and each pattern, which took 13 seconds with data frames and 2.8 seconds with numeric matrices. In version 1.1-0, `twdtw_knn()` and `predict()` gave the same labels and distances in 0.17 seconds for the list of data frames (about 75 times faster), in 0.14 seconds for the list of matrices (about 20 times faster), and in 0.09 seconds for an array (about 140 and 30 times faster). `twdtw()` has the same speed as in version 1.0-1.
+
+* `predict()` and `twdtw_nearest()` call a time-weight function defined in R once for each temporal pattern, and not once for each pair of observations, if the function is vectorised. In the same benchmark, this was about 25 times faster than a function that is not vectorised. The logistic time weight is the fastest option, about 7 times faster than a vectorised function.
 
 * The function `to_date_time()` is now exported.
 

@@ -19,8 +19,9 @@ Description: Implements Time-Weighted Dynamic Time Warping (TWDTW),
     time series with seasonality for environmental and ecological data analysis, 
     covering domains such as remote sensing imagery, climate data, hydrology, 
     and animal movement. The 'twdtw' package offers a user-friendly 'R' interface, 
-    efficient 'Fortran' routines for TWDTW calculations, flexible time weighting 
-    definitions, as well as utilities for time series preprocessing and visualization.
+    efficient 'Fortran' routines for TWDTW calculations, a k-nearest neighbour model 
+    to classify time series, flexible time weighting definitions, as well as utilities 
+    for time series preprocessing and visualization.
 License: GPL (>= 3)
 URL: https://github.com/vwmaus/twdtw/
 BugReports: https://github.com/vwmaus/twdtw/issues/

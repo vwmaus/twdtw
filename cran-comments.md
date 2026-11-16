@@ -1,24 +1,34 @@
 # twdtw-1.1-0
 
 This version adds new features, fixes two memory errors, and is 20 to 140 times
-faster than version 1.0-1 on classification tasks with the new function
-`twdtw_nearest()`. No function or argument of version 1.0-1 was removed or changed.
+faster than version 1.0-1 on classification tasks with the new model
+`twdtw_knn()`. No function or argument of version 1.0-1 was removed or changed.
 
 ## Changes
 
-* New function `twdtw_nearest()`. It calculates the TWDTW distance between a set of
-  time series and a set of temporal patterns in a single call to the 'Fortran'
-  routines, and returns for each time series the k patterns with the lowest
-  distance. The distances are the same as the distances calculated with
-  `twdtw()`. In a benchmark with 10,000 time series and 5 patterns, version
-  1.0-1 took 13 seconds with data frames and 2.8 seconds with numeric
-  matrices, with a call to `twdtw()` for each pair. `twdtw_nearest()` took 0.09
-  seconds (about 140 and 30 times faster), or 0.5 and 0.13 seconds with the
-  time to stack the time series into an array (26 and 21 times faster). A
-  time-weight function defined in 'R' is called once for each temporal
-  pattern, and not once for each pair of observations, if the function is
-  vectorised. In the benchmark, this was about 25 times faster than calling
-  the function for each pair of observations.
+* New function `twdtw_knn()` and a `predict()` method for its result.
+  `twdtw_knn()` creates a k-nearest neighbour model from labelled time series,
+  and `predict()` classifies time series with the labels of their nearest
+  temporal patterns. In a benchmark with 10,000 time series and 5 patterns,
+  version 1.0-1 took 13 seconds with data frames and 2.8 seconds with numeric
+  matrices, with a call to `twdtw()` for each pair. `predict()` gave the same
+  labels and distances in 0.17 and 0.14 seconds (about 75 and 20 times
+  faster), and in 0.09 seconds for time series that are already in an array
+  (about 140 and 30 times faster).
+
+* New function `twdtw_nearest()`, which `predict()` calls. It calculates the
+  TWDTW distance between a set of time series and a set of temporal patterns
+  in a single call to the 'Fortran' routines, and returns for each time series
+  the k patterns with the lowest distance. The distances are the same as the
+  distances calculated with `twdtw()`. A time-weight function defined in 'R'
+  is called once for each temporal pattern, and not once for each pair of
+  observations, if the function is vectorised. In the benchmark, this was
+  about 25 times faster than calling the function for each pair of
+  observations.
+
+* New generic function `twdtw_knn_predict()`, which `predict()` calls with the
+  time series, so that other packages can add methods to classify their own
+  classes of time series with the model.
 
 * The function `to_date_time()` is now exported. It was an internal function in
   version 1.0-1.
@@ -51,7 +61,7 @@ faster than version 1.0-1 on classification tasks with the new function
   1.2-0. `twdtw()` gives a warning once per session if one of them is used,
   and stops with an error for an unknown version.
 
-* Adds tests for the new function and for the memory errors, and a larger test
+* Adds tests for the new functions and for the memory errors, and a larger test
   data set with 999 time series.
 
 ## Segmentation fault in the tests of 'dtwSat'
