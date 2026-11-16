@@ -264,6 +264,47 @@ test_that("arguments that cannot give a model are an error", {
   expect_error(knn_model(samples, labels, resampling_fun = "mean"), "'resampling_fun' must be a function", fixed = TRUE)
 })
 
+test_that("the internal functions called for each time series give the results of the functions they replace", {
+  time <- as.Date("2020-01-01") + c(0, 16, 32, 48)
+  values <- matrix(c(1.5, 2, NA, 4, 5, 6, 7, 8), ncol = 2, dimnames = list(NULL, c("RED", "NIR")))
+
+  # A data.frame with the time index and one column for each band
+  inputs <- list(
+    dates = list(time, values),
+    date_times = list(as.POSIXct("2020-01-01 10:00:00", tz = "America/Sao_Paulo") + (0:3) * 86400, values),
+    numeric_time = list(c(1, 17, 33, 49), values),
+    integer_values = list(time, matrix(1:8, ncol = 2, dimnames = list(NULL, c("RED", "NIR")))),
+    one_band = list(time, values[, "NIR", drop = FALSE]),
+    one_observation = list(time[1], values[1, , drop = FALSE]),
+    no_observation = list(time[0], values[0, , drop = FALSE]),
+    named_time = list(setNames(time, c("a", "b", "c", "d")), values))
+
+  for (case in names(inputs)) {
+    expect_true(identical(twdtw:::.time_series_frame(inputs[[case]][[1]], inputs[[case]][[2]]),
+                          data.frame(time = inputs[[case]][[1]], inputs[[case]][[2]], check.names = FALSE)),
+                info = case)
+  }
+
+  # The observations of a time series that are kept
+  ts <- data.frame(time = time, values, check.names = FALSE)
+  keep <- list(all = rep(TRUE, 4), none = rep(FALSE, 4), first = c(TRUE, TRUE, FALSE, FALSE),
+               last = c(FALSE, FALSE, FALSE, TRUE), some = c(FALSE, TRUE, FALSE, TRUE))
+
+  for (case in names(keep)) {
+    expect_true(identical(twdtw:::.keep_observations(ts, keep[[case]]), ts[keep[[case]], , drop = FALSE]),
+                info = case)
+  }
+
+  # A time series with at least one complete observation
+  series <- list(complete = ts[c(1, 2, 4), ], some_missing = ts, none_complete = ts[3, ],
+                 no_observation = ts[0, ], band_missing = transform(ts, RED = NA_real_))
+
+  for (case in names(series)) {
+    expect_identical(twdtw:::.has_complete_observation(series[[case]]), any(complete.cases(series[[case]])),
+                     info = case)
+  }
+})
+
 test_that("the model is printed with its patterns and the arguments of the distance", {
   m <- knn_model(knn_samples, knn_sample_labels)
   out <- capture.output(printed <- print(m))

@@ -319,7 +319,7 @@ twdtw_knn.default <- function(x, y, time_weight, cycle_length, time_scale, ...) 
   ts <- .cut_time_series(ts, start, end)
 
   # A time series without complete observations cannot be compared
-  has_observations <- vapply(ts, function(s) any(complete.cases(s)), logical(1))
+  has_observations <- vapply(ts, .has_complete_observation, logical(1))
   interval <- if (is.null(start) && is.null(end)) "" else " between 'start' and 'end'"
 
   if (!any(has_observations)) {
@@ -342,7 +342,7 @@ twdtw_knn.default <- function(x, y, time_weight, cycle_length, time_scale, ...) 
     smooth_models <- patterns$smooth_models
 
     # A pattern without complete observations cannot be compared
-    has_observations <- vapply(ts, function(s) any(complete.cases(s)), logical(1))
+    has_observations <- vapply(ts, .has_complete_observation, logical(1))
     if (!all(has_observations)) {
       stop("The temporal pattern created with 'resampling_fun' for the label '", labels[!has_observations][1],
            "' has no complete observation")

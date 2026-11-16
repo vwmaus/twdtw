@@ -141,6 +141,37 @@ test_that("time series of different years overlap in the patterns", {
                as.POSIXct(c("1970-09-14 10:30:00", "1970-09-15 22:00:00"), tz = "UTC"))
 })
 
+test_that("each time series is shifted according to its own first observation", {
+  # Four time series with one observation every 16 days. The first two start at the same
+  # time, which is 31 December in one time zone and 1 January in the other. The third
+  # starts one year later, and the fourth is equal to the first
+  first <- as.POSIXct("2020-12-31 20:00:00", tz = "UTC")
+  series <- function(first, tz) {
+    time <- first + (0:5) * 16 * 86400
+    attr(time, "tzone") <- tz
+    data.frame(time = time, v = as.numeric(1:6))
+  }
+  samples <- list(series(first, "UTC"), series(first, "Asia/Tokyo"),
+                  series(first + 365 * 86400, "UTC"), series(first, "UTC"))
+
+  received <- NULL
+  m <- knn_model(samples, rep("a", 4), resampling_fun = function(data) {
+    received <<- data
+    lm(y ~ x, data = data)
+  })
+
+  # The model of the label receives the observations of all time series, each
+  # shifted as by .shift_dates
+  expected <- unlist(lapply(samples, function(ts) as.numeric(twdtw:::.shift_dates(ts$time))))
+  expect_identical(received$x, expected)
+  expect_identical(received$y, as.numeric(rep(1:6, 4)))
+
+  # The first time series starts on the last day of 1970 and the second on the first
+  time_1970 <- as.POSIXct(received$x[c(1, 7, 13, 19)], origin = "1970-01-01", tz = "UTC")
+  expect_equal(format(time_1970, "%Y-%m-%d %H:%M"),
+               c("1970-12-31 20:00", "1969-12-31 20:00", "1970-12-31 20:00", "1970-12-31 20:00"))
+})
+
 test_that("numeric time indices are not shifted and keep their order", {
   samples <- lapply(knn_samples[1:6], function(ts) {
     ts$time <- as.numeric(format(ts$time, "%j"))

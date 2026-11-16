@@ -146,6 +146,34 @@
 }
 
 # Internal function
+# A data.frame with the column 'time' followed by one column for each column of
+# the numeric matrix 'values', which has the names of the bands. The result is
+# the same as data.frame(time = time, values, check.names = FALSE), but it is
+# created several times faster, which counts because this function is called
+# once for each time series
+.time_series_frame <- function(time, values) {
+
+  # data.frame() uses the names of a time index as row names
+  if (!is.null(names(time))) {
+    return(data.frame(time = time, values, check.names = FALSE))
+  }
+
+  # A column of a matrix with a single row has the name of the column
+  columns <- vector("list", ncol(values) + 1L)
+  columns[[1L]] <- time
+  for (band in seq_len(ncol(values))) {
+    columns[[band + 1L]] <- as.vector(values[, band])
+  }
+
+  names(columns) <- c("time", colnames(values))
+  attr(columns, "row.names") <- .set_row_names(length(time))
+  class(columns) <- "data.frame"
+
+  columns
+
+}
+
+# Internal function
 # Convert a list of time series to a list of data.frames with the column 'time'
 # followed by one column for each band, with the bands in the same order
 .time_series_list <- function(x, index_column, arg) {
@@ -167,7 +195,7 @@
 
     values <- .sort_bands(ts$values, bands, i, arg, "the first time series")
 
-    data.frame(time = ts$time, values, check.names = FALSE)
+    .time_series_frame(ts$time, values)
 
   })
 
@@ -479,7 +507,7 @@
 
   lapply(seq_len(dim(values)[1]), function(i) {
     ts <- matrix(values[i, , ], nrow = length(time), dimnames = list(NULL, bands))
-    data.frame(time = time, ts, check.names = FALSE)
+    .time_series_frame(time, ts)
   })
 
 }
@@ -552,9 +580,38 @@
       keep <- keep & ts[[i]]$time <= end[i]
     }
 
-    ts[[i]][keep, , drop = FALSE]
+    .keep_observations(ts[[i]], keep)
 
   })
+
+}
+
+# Internal function
+# Keep the observations of a time series for which 'keep' is TRUE. The result is
+# the same as ts[keep, , drop = FALSE], but it is created several times faster,
+# which counts because this function is called once for each time series
+.keep_observations <- function(ts, keep) {
+
+  if (all(keep)) {
+    return(ts)
+  }
+
+  rows <- which(keep)
+  kept <- lapply(ts, function(column) column[rows])
+  attr(kept, "row.names") <- attr(ts, "row.names")[rows]
+  class(kept) <- "data.frame"
+
+  kept
+
+}
+
+# Internal function
+# A time series has at least one observation without missing values. The result
+# is the same as any(complete.cases(ts)), but the observations are only checked
+# one by one if the time series has a missing value
+.has_complete_observation <- function(ts) {
+
+  nrow(ts) > 0 && (!anyNA(ts, recursive = TRUE) || any(complete.cases(ts)))
 
 }
 
@@ -571,6 +628,16 @@
     return(x)
   }
 
+  x - .date_shift(x, origin)
+
+}
+
+# Internal function
+# The time by which the dates or date-times 'x' of a time series are shifted by
+# .shift_dates, in the unit of 'x': days for dates and seconds for date-times.
+# It depends only on the first observation
+.date_shift <- function(x, origin = "1970-01-01") {
+
   # Calendar date of the first observation, for a date-time in its own time zone
   first_date <- as.Date(format(x[1], "%Y-%m-%d"))
   day_of_year <- as.numeric(format(first_date, "%j"))
@@ -583,10 +650,10 @@
   day_diff <- as.numeric(first_date - new_start)
 
   if (inherits(x, "Date")) {
-    return(x - day_diff)
+    return(day_diff)
   }
 
-  x - day_diff * 86400
+  day_diff * 86400
 
 }
 
@@ -599,11 +666,17 @@
 
   bands <- setdiff(names(ts[[1]]), "time")
 
-  # Align time series of different years
-  ts <- lapply(ts, function(s) {
-    s$time <- .shift_dates(s$time)
-    s
-  })
+  # Align time series of different years, as .shift_dates does for one time series.
+  # The shift of a time series depends only on its first observation, so it is
+  # calculated once for each first observation and not once for each time series
+  shift <- NULL
+  if (!is.numeric(ts[[1]]$time)) {
+    first <- vapply(ts, function(s) paste(unclass(s$time)[1], attr(s$time, "tzone")[1]), character(1))
+    distinct <- which(!duplicated(first))
+    shift <- vapply(ts[distinct], function(s) .date_shift(s$time), numeric(1))[match(first, first[distinct])]
+  }
+
+  n_observations <- vapply(ts, nrow, integer(1))
 
   # One pattern for each label, in the order in which the labels first appear
   pattern_labels <- unique(labels)
@@ -613,12 +686,17 @@
 
   for (l in seq_along(pattern_labels)) {
 
-    label_ts <- ts[labels == pattern_labels[l]]
+    in_label <- which(labels == pattern_labels[l])
+    label_ts <- ts[in_label]
     label_time <- do.call(c, lapply(label_ts, function(s) s$time))
+
+    if (!is.null(shift)) {
+      label_time <- label_time - rep(shift[in_label], times = n_observations[in_label])
+    }
 
     # Fit a model to the observations of each band
     smooth_models[[l]] <- lapply(setNames(bands, bands), function(band) {
-      values <- unlist(lapply(label_ts, function(s) s[[band]]), use.names = FALSE)
+      values <- unlist(lapply(label_ts, .subset2, band), use.names = FALSE)
       resampling_fun(data.frame(x = as.numeric(label_time), y = values))
     })
 
