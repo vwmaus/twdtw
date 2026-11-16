@@ -20,6 +20,13 @@ test_that("the resampling function creates one temporal pattern for each label",
     expect_s3_class(label_models$EVI, "lm")
   }
 
+  # The root mean squared error of each model, with one row for each band and one column for each label
+  expect_identical(dimnames(m$rmse), list(knn_bands, labels))
+  for (l in seq_along(labels)) {
+    expect_equal(unname(m$rmse[, l]),
+                 unname(sapply(m$smooth_models[[l]], function(model) sqrt(mean(residuals(model)^2)))))
+  }
+
   # With the dates as a factor, the pattern is the mean of the samples on each date
   x <- knn_array(knn_samples)
   for (l in seq_along(labels)) {
@@ -36,6 +43,58 @@ test_that("the resampling function creates one temporal pattern for each label",
   m_wide <- knn_model(knn_wide(knn_samples), knn_sample_labels, resampling_fun = mean_by_date)
   expect_equal(m_array$data, m$data)
   expect_equal(m_wide$data, m$data)
+})
+
+test_that("keep_models = FALSE keeps the root mean squared error of the models and not the models", {
+  mean_by_date <- function(data) lm(y ~ factor(x), data = data)
+  m <- knn_model(knn_samples, knn_sample_labels, resampling_fun = mean_by_date)
+  m_small <- knn_model(knn_samples, knn_sample_labels, resampling_fun = mean_by_date, keep_models = FALSE)
+
+  expect_named(m_small, names(m))
+  expect_null(m_small$smooth_models)
+  expect_identical(m_small$rmse, m$rmse)
+  expect_identical(m_small$data, m$data)
+  expect_lt(as.numeric(object.size(m_small)), as.numeric(object.size(m)) / 10)
+
+  # The same predictions, and the same summary after the call
+  new_series <- knn_series[knn_new_ids]
+  expect_identical(predict(m_small, newdata = new_series), predict(m, newdata = new_series))
+  printed_data <- function(model) {
+    out <- capture.output(print(model))
+    out[seq(which(out == "Data:"), length(out))]
+  }
+  expect_identical(printed_data(m_small), printed_data(m))
+  expect_match(printed_data(m_small), "one for each label created with 'resampling_fun'", fixed = TRUE, all = FALSE)
+  expect_match(printed_data(m_small), "Root Mean Squared Error (RMSE) of smooth models:", fixed = TRUE, all = FALSE)
+
+  # A model that was created before the error was kept has only the models
+  m_before <- m
+  m_before$rmse <- NULL
+  expect_identical(printed_data(m_before), printed_data(m))
+
+  # The other two forms of x
+  m_array <- knn_model(knn_array(knn_samples), knn_sample_labels, time = knn_time,
+                       resampling_fun = mean_by_date, keep_models = FALSE)
+  m_wide <- knn_model(knn_wide(knn_samples), knn_sample_labels, resampling_fun = mean_by_date, keep_models = FALSE)
+  for (model in list(m_array, m_wide)) {
+    expect_null(model$smooth_models)
+    expect_equal(model$rmse, m$rmse)
+    expect_equal(model$data, m$data)
+  }
+
+  # A model that keeps all time series has no models to keep
+  m_all <- knn_model(knn_samples, knn_sample_labels, keep_models = FALSE)
+  expect_null(m_all$rmse)
+  expect_identical(m_all$data, knn_model(knn_samples, knn_sample_labels)$data)
+
+  # A model without residuals has no root mean squared error
+  registerS3method("predict", "knn_test_mean", function(object, newdata, ...) rep(object$mean, nrow(newdata)))
+  m_mean <- knn_model(knn_samples, knn_sample_labels,
+                      resampling_fun = function(data) structure(list(mean = mean(data$y)), class = "knn_test_mean"))
+  expect_identical(dimnames(m_mean$rmse), dimnames(m$rmse))
+  expect_true(all(is.na(m_mean$rmse)))
+  expect_equal(m_mean$data$observations[[1]]$EVI,
+               rep(mean(knn_array(knn_samples)[knn_sample_labels == m_mean$data$label[1], , "EVI"]), length(knn_time)))
 })
 
 test_that("the resampling function receives the time index and the values of all samples of a label", {

@@ -661,8 +661,10 @@
 # Create one temporal pattern for each label. The function 'resampling_fun' is
 # called for each label and band with a data.frame that has the time index 'x'
 # and the values 'y' of all time series with this label. The model that it
-# returns gives the values of the temporal pattern
-.resample_patterns <- function(ts, labels, resampling_fun, resampling_freq) {
+# returns gives the values of the temporal pattern. The root mean squared error
+# of each model is returned, and the models themselves only if 'keep_models' is
+# TRUE: a fitted model usually contains its data
+.resample_patterns <- function(ts, labels, resampling_fun, resampling_freq, keep_models = TRUE) {
 
   bands <- setdiff(names(ts[[1]]), "time")
 
@@ -680,9 +682,15 @@
 
   # One pattern for each label, in the order in which the labels first appear
   pattern_labels <- unique(labels)
-  smooth_models <- vector("list", length(pattern_labels))
-  names(smooth_models) <- pattern_labels
   patterns <- vector("list", length(pattern_labels))
+  rmse <- matrix(NA_real_, nrow = length(bands), ncol = length(pattern_labels),
+                 dimnames = list(bands, pattern_labels))
+
+  smooth_models <- NULL
+  if (keep_models) {
+    smooth_models <- vector("list", length(pattern_labels))
+    names(smooth_models) <- pattern_labels
+  }
 
   for (l in seq_along(pattern_labels)) {
 
@@ -693,12 +701,6 @@
     if (!is.null(shift)) {
       label_time <- label_time - rep(shift[in_label], times = n_observations[in_label])
     }
-
-    # Fit a model to the observations of each band
-    smooth_models[[l]] <- lapply(setNames(bands, bands), function(band) {
-      values <- unlist(lapply(label_ts, .subset2, band), use.names = FALSE)
-      resampling_fun(data.frame(x = as.numeric(label_time), y = values))
-    })
 
     # Time index of the temporal pattern: the dates of the observations in time
     # order, or the numeric time indices in the order of the observations
@@ -711,15 +713,46 @@
       pattern_time <- seq(min(label_time), max(label_time), by = resampling_freq)
     }
 
-    pattern_values <- lapply(setNames(bands, bands), function(band) {
-      .predict_pattern(smooth_models[[l]][[band]], pattern_time, pattern_labels[l], band)
-    })
+    # Fit a model to the observations of each band. A model that is not kept is
+    # removed before the next model is fitted
+    label_models <- vector("list", length(bands))
+    names(label_models) <- bands
+    pattern_values <- label_models
+
+    for (b in seq_along(bands)) {
+
+      values <- unlist(lapply(label_ts, .subset2, bands[b]), use.names = FALSE)
+      model <- resampling_fun(data.frame(x = as.numeric(label_time), y = values))
+
+      pattern_values[[b]] <- .predict_pattern(model, pattern_time, pattern_labels[l], bands[b])
+      rmse[b, l] <- .model_rmse(model)
+
+      if (keep_models) {
+        label_models[b] <- list(model)
+      }
+
+    }
+
+    if (keep_models) {
+      smooth_models[[l]] <- label_models
+    }
 
     patterns[[l]] <- data.frame(time = pattern_time, pattern_values, check.names = FALSE)
 
   }
 
-  list(patterns = patterns, labels = pattern_labels, smooth_models = smooth_models)
+  list(patterns = patterns, labels = pattern_labels, smooth_models = smooth_models, rmse = rmse)
+
+}
+
+# Internal function
+# Root mean squared error of a model returned by 'resampling_fun', or NA if the
+# model has no numeric residuals
+.model_rmse <- function(model) {
+
+  model_residuals <- tryCatch(residuals(model), error = function(e) NULL)
+
+  if (is.numeric(model_residuals)) sqrt(mean(model_residuals^2, na.rm = TRUE)) else NA_real_
 
 }
 

@@ -22,7 +22,8 @@ twdtw_knn(x, y, time_weight, cycle_length, time_scale, ..., time = NULL)
   origin = NULL,
   max_elapsed = Inf,
   index_column = "time",
-  ...
+  ...,
+  keep_models = TRUE
 )
 
 \method{twdtw_knn}{data.frame}(
@@ -37,7 +38,8 @@ twdtw_knn(x, y, time_weight, cycle_length, time_scale, ..., time = NULL)
   end = NULL,
   origin = NULL,
   max_elapsed = Inf,
-  ...
+  ...,
+  keep_models = TRUE
 )
 
 \method{twdtw_knn}{array}(
@@ -53,7 +55,8 @@ twdtw_knn(x, y, time_weight, cycle_length, time_scale, ..., time = NULL)
   origin = NULL,
   max_elapsed = Inf,
   time = NULL,
-  ...
+  ...,
+  keep_models = TRUE
 )
 }
 \arguments{
@@ -94,12 +97,19 @@ from which the elapsed time is computed. Must be of the same class as x.}
 
 \item{index_column}{The column name or the column position of the time index of the time series in a list.
 Defaults to "time".}
+
+\item{keep_models}{If \code{TRUE} (default), the model keeps the models returned by
+\code{resampling_fun}. If \code{FALSE}, it keeps only their root mean squared error, which makes the
+model much smaller. See details.}
 }
 \value{
 An object of class \code{twdtw_knn}, which is a list with:
 \item{call}{The call of the function.}
-\item{smooth_models}{The models returned by \code{resampling_fun} for each label and band,
-or \code{NULL} if the model keeps all time series.}
+\item{smooth_models}{The models returned by \code{resampling_fun}: a list with one element for each
+label, which is a list with the model of each band. \code{NULL} if the model keeps all time series
+or if \code{keep_models} is \code{FALSE}.}
+\item{rmse}{The root mean squared error of the models returned by \code{resampling_fun}: a matrix with
+one row for each band and one column for each label, or \code{NULL} if the model keeps all time series.}
 \item{data}{A data.frame with one row for each temporal pattern and the columns \code{label} and
 \code{observations}. The latter is a list of data.frames with the column \code{time} and one column for each band.}
 \item{twdtw_args}{A list with the arguments of the TWDTW distance: \code{time_weight}, \code{cycle_length},
@@ -150,6 +160,16 @@ called, time series with dates are shifted to start on the same day of the year 
 so that time series of different years overlap. This aligns the time series by the year. For another
 cycle, e.g. \code{cycle_length = 'day'}, use numeric time indices in the units of the cycle, which are
 not shifted.
+
+Most of the time to create the temporal patterns is used to fit these models. With thousands of
+time series, \code{function(data) mgcv::bam(y ~ s(x), data = data, discrete = TRUE)} gives nearly
+the same patterns as \code{mgcv::gam} and is about two times faster.
+
+The model keeps the models returned by \code{resampling_fun} in \code{smooth_models}. A fitted model
+usually contains the data it was fitted to, i.e. the observations of all time series of a label.
+With \code{keep_models = FALSE} the model keeps only the root mean squared error of each of them,
+which \code{print} shows. This makes the model much smaller, e.g. to save it to a file or to send it
+to other processes. The temporal patterns and the predictions are the same.
 
 The temporal patterns of different labels can have a different number of observations, e.g. if the
 time series of the labels are from different years and their dates are one day apart after the shift.
@@ -214,7 +234,7 @@ lu
 
 }
 \references{
-Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Moura, Y. M. (2016).
+Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Queiroz, G. R. (2016).
 A Time-Weighted Dynamic Time Warping Method for Land-Use and Land-Cover Mapping.
 IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing, 9(8), 3729-3739.
 \doi{10.1109/JSTARS.2016.2517118}

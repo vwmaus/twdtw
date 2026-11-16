@@ -18,6 +18,9 @@
 #' @param resampling_freq The time between the observations of the temporal patterns created with
 #' \code{resampling_fun}, e.g. \code{16} for 16 days if the time indices are dates. If \code{NULL} (default),
 #' the temporal patterns have the time indices of the observations of the time series.
+#' @param keep_models If \code{TRUE} (default), the model keeps the models returned by
+#' \code{resampling_fun}. If \code{FALSE}, it keeps only their root mean squared error, which makes the
+#' model much smaller. See details.
 #' @param start,end The time interval in which the label of each time series is valid. Either one value
 #' for all time series or a vector with one value for each time series, of the same class as the time indices.
 #' Only the observations from \code{start} to \code{end}, including both, are used.
@@ -68,6 +71,16 @@
 #' cycle, e.g. \code{cycle_length = 'day'}, use numeric time indices in the units of the cycle, which are
 #' not shifted.
 #'
+#' Most of the time to create the temporal patterns is used to fit these models. With thousands of
+#' time series, \code{function(data) mgcv::bam(y ~ s(x), data = data, discrete = TRUE)} gives nearly
+#' the same patterns as \code{mgcv::gam} and is about two times faster.
+#'
+#' The model keeps the models returned by \code{resampling_fun} in \code{smooth_models}. A fitted model
+#' usually contains the data it was fitted to, i.e. the observations of all time series of a label.
+#' With \code{keep_models = FALSE} the model keeps only the root mean squared error of each of them,
+#' which \code{print} shows. This makes the model much smaller, e.g. to save it to a file or to send it
+#' to other processes. The temporal patterns and the predictions are the same.
+#'
 #' The temporal patterns of different labels can have a different number of observations, e.g. if the
 #' time series of the labels are from different years and their dates are one day apart after the shift.
 #' The TWDTW distance is not divided by the number of observations of the pattern, so a pattern with fewer
@@ -83,15 +96,18 @@
 #'
 #' @return An object of class \code{twdtw_knn}, which is a list with:
 #' \item{call}{The call of the function.}
-#' \item{smooth_models}{The models returned by \code{resampling_fun} for each label and band,
-#' or \code{NULL} if the model keeps all time series.}
+#' \item{smooth_models}{The models returned by \code{resampling_fun}: a list with one element for each
+#' label, which is a list with the model of each band. \code{NULL} if the model keeps all time series
+#' or if \code{keep_models} is \code{FALSE}.}
+#' \item{rmse}{The root mean squared error of the models returned by \code{resampling_fun}: a matrix with
+#' one row for each band and one column for each label, or \code{NULL} if the model keeps all time series.}
 #' \item{data}{A data.frame with one row for each temporal pattern and the columns \code{label} and
 #' \code{observations}. The latter is a list of data.frames with the column \code{time} and one column for each band.}
 #' \item{twdtw_args}{A list with the arguments of the TWDTW distance: \code{time_weight}, \code{cycle_length},
 #' \code{time_scale}, \code{origin}, and \code{max_elapsed}.}
 #'
 #' @references
-#' Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Moura, Y. M. (2016).
+#' Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Queiroz, G. R. (2016).
 #' A Time-Weighted Dynamic Time Warping Method for Land-Use and Land-Cover Mapping.
 #' IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing, 9(8), 3729-3739.
 #' \doi{10.1109/JSTARS.2016.2517118}
@@ -163,7 +179,8 @@ twdtw_knn.list <- function(x, y,
                            end = NULL,
                            origin = NULL,
                            max_elapsed = Inf,
-                           index_column = 'time', ...) {
+                           index_column = 'time', ...,
+                           keep_models = TRUE) {
 
   .check_unknown_args(list(...), "twdtw_knn", "x")
 
@@ -180,6 +197,7 @@ twdtw_knn.list <- function(x, y,
                    time_scale = time_scale,
                    resampling_fun = resampling_fun,
                    resampling_freq = resampling_freq,
+                   keep_models = keep_models,
                    start = start,
                    end = end,
                    origin = origin,
@@ -199,7 +217,8 @@ twdtw_knn.data.frame <- function(x, y,
                                  start = NULL,
                                  end = NULL,
                                  origin = NULL,
-                                 max_elapsed = Inf, ...) {
+                                 max_elapsed = Inf, ...,
+                                 keep_models = TRUE) {
 
   .check_unknown_args(list(...), "twdtw_knn", "x")
 
@@ -218,6 +237,7 @@ twdtw_knn.data.frame <- function(x, y,
                    time_scale = time_scale,
                    resampling_fun = resampling_fun,
                    resampling_freq = resampling_freq,
+                   keep_models = keep_models,
                    start = start,
                    end = end,
                    origin = origin,
@@ -238,7 +258,8 @@ twdtw_knn.array <- function(x, y,
                             end = NULL,
                             origin = NULL,
                             max_elapsed = Inf,
-                            time = NULL, ...) {
+                            time = NULL, ...,
+                            keep_models = TRUE) {
 
   .check_unknown_args(list(...), "twdtw_knn", "x")
 
@@ -256,6 +277,7 @@ twdtw_knn.array <- function(x, y,
                    time_scale = time_scale,
                    resampling_fun = resampling_fun,
                    resampling_freq = resampling_freq,
+                   keep_models = keep_models,
                    start = start,
                    end = end,
                    origin = origin,
@@ -282,6 +304,7 @@ twdtw_knn.default <- function(x, y, time_weight, cycle_length, time_scale, ...) 
                              time_scale,
                              resampling_fun,
                              resampling_freq,
+                             keep_models,
                              start,
                              end,
                              origin,
@@ -305,6 +328,10 @@ twdtw_knn.default <- function(x, y, time_weight, cycle_length, time_scale, ...) 
 
   if (!is.null(resampling_fun) && !is.function(resampling_fun)) {
     stop("'resampling_fun' must be a function")
+  }
+
+  if (!is.logical(keep_models) || length(keep_models) != 1 || is.na(keep_models)) {
+    stop("'keep_models' must be TRUE or FALSE")
   }
 
   # All time series have the same kind of time index
@@ -335,11 +362,13 @@ twdtw_knn.default <- function(x, y, time_weight, cycle_length, time_scale, ...) 
 
   # Create one temporal pattern for each label
   smooth_models <- NULL
+  rmse <- NULL
   if (!is.null(resampling_fun)) {
-    patterns <- .resample_patterns(ts, labels, resampling_fun, resampling_freq)
+    patterns <- .resample_patterns(ts, labels, resampling_fun, resampling_freq, keep_models)
     ts <- patterns$patterns
     labels <- patterns$labels
     smooth_models <- patterns$smooth_models
+    rmse <- patterns$rmse
 
     # A pattern without complete observations cannot be compared
     has_observations <- vapply(ts, .has_complete_observation, logical(1))
@@ -354,6 +383,7 @@ twdtw_knn.default <- function(x, y, time_weight, cycle_length, time_scale, ...) 
 
   model <- list(call = call,
                 smooth_models = smooth_models,
+                rmse = rmse,
                 data = data,
                 twdtw_args = list(time_weight = time_weight,
                                   cycle_length = cycle_length,
@@ -462,8 +492,15 @@ print.twdtw_knn <- function(x, ...) {
   labels <- as.character(x$data$label)
   bands <- setdiff(names(patterns[[1]]), "time")
 
+  # The root mean squared error of the models returned by 'resampling_fun'. A
+  # model that was created before it was kept has the models
+  rmse <- x$rmse
+  if (is.null(rmse) && !is.null(x$smooth_models)) {
+    rmse <- sapply(x$smooth_models, function(label_models) sapply(label_models, .model_rmse))
+  }
+
   cat("\nData:\n")
-  if (is.null(x$smooth_models)) {
+  if (is.null(rmse)) {
     cat(" ", length(patterns), "temporal patterns, the labelled time series\n")
   } else {
     cat(" ", length(patterns), "temporal patterns, one for each label created with 'resampling_fun'\n")
@@ -484,12 +521,9 @@ print.twdtw_knn <- function(x, ...) {
   }))
   print(label_summary, row.names = FALSE)
 
-  if (!is.null(x$smooth_models)) {
+  if (!is.null(rmse)) {
     cat("\nRoot Mean Squared Error (RMSE) of smooth models:\n")
-    print(sapply(x$smooth_models, function(label_models) sapply(label_models, function(model) {
-      model_residuals <- tryCatch(residuals(model), error = function(e) NULL)
-      if (is.numeric(model_residuals)) sqrt(mean(model_residuals^2, na.rm = TRUE)) else NA_real_
-    })))
+    print(rmse)
   }
 
   cat("\nTWDTW Arguments:\n")

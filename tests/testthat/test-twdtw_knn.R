@@ -7,8 +7,9 @@ test_that("the model keeps the labelled time series as temporal patterns", {
 
   # A single class, so that predict functions of other packages find the method
   expect_identical(class(m), "twdtw_knn")
-  expect_named(m, c("call", "smooth_models", "data", "twdtw_args"))
+  expect_named(m, c("call", "smooth_models", "rmse", "data", "twdtw_args"))
   expect_null(m$smooth_models)
+  expect_null(m$rmse)
   expect_identical(m$call[[1]], as.name("twdtw_knn"))
 
   expect_s3_class(m$data, "data.frame")
@@ -221,6 +222,14 @@ test_that("arguments that cannot give a model are an error", {
                "Unknown arguments in twdtw_knn: 'time'. 'time' is only used if 'x' is an array.", fixed = TRUE)
   expect_error(knn_model(knn_wide(samples), labels, index_column = "time"),
                "Unknown arguments in twdtw_knn: 'index_column'.", fixed = TRUE)
+
+  # The number of nearest neighbours is an argument of predict. It is not taken
+  # as a short form of 'keep_models', which must be given with its full name
+  expect_error(knn_model(samples, labels, k = 3), "Unknown arguments in twdtw_knn: 'k'.", fixed = TRUE)
+  expect_error(knn_model(samples, labels, keep = FALSE), "Unknown arguments in twdtw_knn: 'keep'.", fixed = TRUE)
+  for (value in list(NA, "no", c(TRUE, FALSE), NULL)) {
+    expect_error(knn_model(samples, labels, keep_models = value), "'keep_models' must be TRUE or FALSE", fixed = TRUE)
+  }
 
   # Time series
   expect_error(knn_model(list(), character(0)), "'x' has no time series", fixed = TRUE)
