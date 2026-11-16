@@ -11,7 +11,7 @@
   
 # twdtw
 
-Implements Time-Weighted Dynamic Time Warping (TWDTW), 
+Provides a fast implementation of Time-Weighted Dynamic Time Warping (TWDTW), 
 a measure for quantifying time series similarity. The TWDTW algorithm, 
 described in Maus et al. (2016) and 
 Maus et al. (2019), is applicable to multi-dimensional 
@@ -21,7 +21,10 @@ covering domains such as remote sensing imagery, climate data, hydrology,
 and animal movement. The 'twdtw' package offers a user-friendly 'R' interface, 
 efficient 'Fortran' routines for TWDTW calculations, a k-nearest neighbour model 
 to classify time series, flexible time weighting definitions, as well as utilities 
-for time series preprocessing and visualization.
+for time series preprocessing and visualization. With one temporal pattern for 
+each class, the classification of time series has a processing time comparable 
+to that of other machine learning models available in 'R', such as random forest 
+and support vector machines.
 
 # Installation
 
@@ -80,7 +83,7 @@ types of prediction.
 
 # References
 
-Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Moura, Y. M. (2016).
+Maus, V., Camara, G., Cartaxo, R., Sanchez, A., Ramos, F. M., & de Queiroz, G. R. (2016).
 A Time-Weighted Dynamic Time Warping Method for Land-Use and Land-Cover Mapping.
 IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing, 9(8), 3729-3739.
 [10.1109/JSTARS.2016.2517118](https://doi.org/10.1109/JSTARS.2016.2517118)
