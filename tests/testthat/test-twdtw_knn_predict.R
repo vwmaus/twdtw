@@ -56,6 +56,65 @@ test_that("the forms of newdata give the same result", {
   expect_equal(predict(sample_model, newdata = new_series[4], k = 3), lu[4, ], ignore_attr = "row.names")
 })
 
+test_that("a list of time series with the same dates is converted to one array", {
+  x <- knn_array(new_series)
+  lu <- predict(sample_model, newdata = x, time = knn_time, k = 3, type = "neighbors")
+
+  # Data frames with the same columns and the same dates are converted together
+  converted <- twdtw:::.same_time_series_array(new_series, "time", knn_bands)
+  expect_equal(converted$values, x)
+  expect_identical(converted$time, knn_time)
+  expect_identical(converted$rows, seq_along(new_series))
+  expect_equal(predict(sample_model, newdata = new_series, k = 3, type = "neighbors"), lu)
+
+  # Rows and bands in another order, and dates as character strings
+  reordered <- lapply(new_series, function(ts) ts[23:1, c("MIR", "NIR", "time", "BLUE", "RED", "NDVI", "EVI")])
+  expect_equal(twdtw:::.same_time_series_array(reordered, "time", knn_bands), converted)
+  expect_equal(predict(sample_model, newdata = reordered, k = 3, type = "neighbors"), lu)
+  as_text <- lapply(new_series, function(ts) {
+    ts$time <- as.character(ts$time)
+    ts
+  })
+  expect_equal(twdtw:::.same_time_series_array(as_text, "time", knn_bands), converted)
+
+  # Matrices with the time index in the first column, with and without column names
+  ts_matrix <- lapply(new_series, function(ts) cbind(time = as.numeric(format(ts$time, "%j")), as.matrix(ts[knn_bands])))
+  converted_matrix <- twdtw:::.same_time_series_array(ts_matrix, "time", knn_bands)
+  expect_equal(converted_matrix$values, x)
+  expect_equal(converted_matrix$time, as.numeric(format(knn_time, "%j")))
+  expect_equal(twdtw:::.same_time_series_array(lapply(ts_matrix, unname), 1, knn_bands), converted_matrix)
+  expect_equal(predict(sample_model, newdata = ts_matrix, k = 3, type = "neighbors"), lu)
+
+  # Time series that are not as the first one are converted one by one, with the same result
+  one_differs <- new_series
+  one_differs[[5]] <- one_differs[[5]][c("time", rev(knn_bands))]
+  expect_null(twdtw:::.same_time_series_array(one_differs, "time", knn_bands))
+  expect_equal(predict(sample_model, newdata = one_differs, k = 3, type = "neighbors"), lu)
+  other_dates <- new_series
+  other_dates[[2]] <- other_dates[[2]][-1, ]
+  expect_null(twdtw:::.same_time_series_array(other_dates, "time", knn_bands))
+  missing_date <- new_series
+  missing_date[[1]]$time[3] <- NA
+  expect_null(twdtw:::.same_time_series_array(missing_date, "time", knn_bands))
+  expect_null(twdtw:::.same_time_series_array(c(new_series, list(ts_matrix[[1]])), "time", knn_bands))
+  expect_null(twdtw:::.same_time_series_array(lapply(new_series, function(ts) ts[c("time", "EVI")]), "time", knn_bands))
+
+  # The conversion one by one gives the error messages
+  not_numeric <- new_series
+  not_numeric[[3]]$EVI <- as.character(not_numeric[[3]]$EVI)
+  expect_null(twdtw:::.same_time_series_array(not_numeric, "time", knn_bands))
+  expect_error(predict(sample_model, newdata = not_numeric),
+               "Element 3 of 'newdata' has non-numeric columns", fixed = TRUE)
+  expect_error(predict(sample_model, newdata = new_series, index_column = "date"),
+               "The 'index_column' was not found in element 1 of 'newdata'", fixed = TRUE)
+  no_dates <- lapply(new_series[1:3], function(ts) {
+    ts$time <- "first"
+    ts
+  })
+  expect_null(twdtw:::.same_time_series_array(no_dates, "time", knn_bands))
+  expect_error(predict(sample_model, newdata = no_dates))
+})
+
 test_that("time series with different dates are classified in the order of newdata", {
   # Time series without some of their observations, with rows and bands in another order
   different <- new_series[1:12]

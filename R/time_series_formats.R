@@ -174,6 +174,120 @@
 }
 
 # Internal function
+# Convert a list of time series that all have the same columns and the same
+# time index to an array with the dimensions series, time, and band, without
+# converting each time series on its own. This is the usual case, e.g. the
+# pixels of satellite images, and it is several times faster. Returns NULL if
+# the time series differ or cannot be used as they are. They are then
+# converted one by one, which also gives the error messages
+.same_time_series_array <- function(x, index_column, bands) {
+
+  first <- x[[1]]
+  is_data_frame <- is.data.frame(first)
+
+  if (!(is_data_frame || is.matrix(first)) || ncol(first) != length(bands) + 1) {
+    return(NULL)
+  }
+
+  # Find 'index_column' by its name or position
+  columns <- colnames(first)
+  if (is.character(index_column)) {
+    index <- match(index_column, columns)
+  } else {
+    index <- index_column
+  }
+
+  if (length(index) != 1 || is.na(index) || index < 1 || index > ncol(first)) {
+    return(NULL)
+  }
+
+  # Position of the bands of the model. Without names they are matched by position
+  if (is.null(columns)) {
+    band_columns <- seq_len(ncol(first))[-index]
+  } else {
+    band_columns <- match(bands, columns)
+  }
+
+  time <- if (is_data_frame) first[[index]] else unname(first[, index])
+
+  if (anyNA(band_columns) || length(time) < 1 || anyNA(time)) {
+    return(NULL)
+  }
+
+  # The time index as dates or numbers, as for a time series converted on its own
+  standard_time <- tryCatch(.standard_time(time, "The time index"), error = function(e) NULL)
+
+  if (is.null(standard_time) || anyNA(standard_time)) {
+    return(NULL)
+  }
+
+  if (is_data_frame) {
+
+    # Values of a time series band by band, if it has the columns and the
+    # time index of the first time series
+    get_values <- function(ts) {
+      if (!is.data.frame(ts) || !identical(names(ts), columns) || !identical(.subset2(ts, index), time)) {
+        stop("not the same time series")
+      }
+      values <- .subset(ts, band_columns)
+      is_numeric <- vapply(values, is.numeric, logical(1))
+      if (!all(is_numeric) && !all(vapply(values[!is_numeric], .is_band_values, logical(1)))) {
+        stop("not numeric")
+      }
+      unlist(values, use.names = FALSE)
+    }
+
+    values <- tryCatch(vapply(x, get_values, numeric(length(time) * length(bands)), USE.NAMES = FALSE),
+                       error = function(e) NULL)
+
+    if (is.null(values)) {
+      return(NULL)
+    }
+
+  } else {
+
+    # Matrices with the size and the columns of the first time series are
+    # stacked as they are, and their time index is compared afterwards
+    size <- dim(first)
+    get_matrix <- function(ts) {
+      if (!identical(dim(ts), size) || !identical(dimnames(ts)[[2]], columns) || !.is_band_values(ts)) {
+        stop("not the same time series")
+      }
+      ts
+    }
+
+    values <- tryCatch(vapply(x, get_matrix, matrix(0, size[1], size[2]), USE.NAMES = FALSE),
+                       error = function(e) NULL)
+
+    if (is.null(values)) {
+      return(NULL)
+    }
+
+    same_time <- matrix(values[, index, ], nrow = length(time)) == as.numeric(time)
+    if (!isTRUE(all(same_time))) {
+      return(NULL)
+    }
+
+    values <- values[, band_columns, , drop = FALSE]
+
+  }
+
+  time <- standard_time
+  values <- aperm(array(values, dim = c(length(time), length(bands), length(x))), c(3, 1, 2))
+  dimnames(values) <- list(NULL, NULL, bands)
+
+  # Observations are used in time order
+  if (.is_unsorted_time(time)) {
+    time_order <- order(time)
+    time <- time[time_order]
+    values <- values[, time_order, , drop = FALSE]
+  }
+
+  list(rows = seq_along(x), time = time, values = values)
+
+}
+
+# Internal function
 # Convert a list of time series to arrays with the dimensions series, time, and
 # band. Time series with the same time index are in the same array, so that a
 # list of time series with the same dates gives a single array. 'bands' has the
@@ -183,6 +297,12 @@
 
   if (length(x) < 1) {
     stop(sprintf("'%s' has no time series", arg))
+  }
+
+  # Time series with the same columns and the same time index
+  same_time_series <- .same_time_series_array(x, index_column, bands)
+  if (!is.null(same_time_series)) {
+    return(list(same_time_series))
   }
 
   ts <- lapply(seq_along(x), function(i) {
