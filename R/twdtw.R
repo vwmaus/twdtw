@@ -59,6 +59,14 @@
 #' \code{time_weight = function(dist, el) dist + 0.1*el} defines a linear weighting scheme with a slope of 0.1.
 #' A time-weight function can only be used with \code{version = 'f90'}, which is the default.
 #'
+#' To calculate the distance without a time weight, use a logistic weight with a midpoint far
+#' above any elapsed time, e.g. \code{time_weight = c(steepness = 1, midpoint = 1e6)}, which adds zero
+#' to the distance of each pair of observations. The result is the Dynamic Time Warping (DTW)
+#' distance as TWDTW calculates it: all observations of \code{y} are matched, and the match
+#' can start and end at any observation of \code{x}. This is not the DTW distance between two
+#' time series that are matched from their first to their last observations. The function
+#' \code{function(dist, el) dist} gives the same distance, but is slower.
+#'
 #' The versions '`f90goto`' and '`cpp`' are deprecated and will be removed in version 1.2-0.
 #' They give the same result as the default version '`f90`' for the logistic time weight,
 #' and \code{twdtw} gives a warning once per session if one of them is used.
@@ -117,6 +125,12 @@
 #'       cycle_length = 'year',
 #'       time_scale = 'day',
 #'       time_weight = function(x,y) x + 1.0 / (1.0 + exp(-0.1 * (y - 50))))
+#'
+#' # Without a time weight: a midpoint that no elapsed time reaches adds zero
+#' twdtw(x, y,
+#'       cycle_length = 'year',
+#'       time_scale = 'day',
+#'       time_weight = c(steepness = 1, midpoint = 1e6))
 #'
 #' @include convert_date_to_numeric.R
 #'
