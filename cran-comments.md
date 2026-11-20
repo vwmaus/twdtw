@@ -76,7 +76,7 @@ not occur with this version, and 'dtwSat' can be resubmitted after this update.
 ## Test environments
 
 * Local Ubuntu 24.04.5 LTS, R 4.6.2, GCC and GNU Fortran 13.3.0
-* GitHub Actions, Ubuntu 26.04.1 LTS, R-devel (2026-11-14 r90890)
+* GitHub Actions, Ubuntu 26.04.1 LTS, R-devel (2026-11-19 r90939)
 * GitHub Actions, Ubuntu 26.04.1 LTS, R 4.6.2
 * GitHub Actions, Ubuntu 26.04.1 LTS, R 4.5.3
 * GitHub Actions, macOS Tahoe 26.7.2 (arm64), R 4.6.2
