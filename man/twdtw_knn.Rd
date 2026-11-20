@@ -23,7 +23,7 @@ twdtw_knn(x, y, time_weight, cycle_length, time_scale, ..., time = NULL)
   max_elapsed = Inf,
   index_column = "time",
   ...,
-  keep_models = TRUE
+  keep_models = FALSE
 )
 
 \method{twdtw_knn}{data.frame}(
@@ -39,7 +39,7 @@ twdtw_knn(x, y, time_weight, cycle_length, time_scale, ..., time = NULL)
   origin = NULL,
   max_elapsed = Inf,
   ...,
-  keep_models = TRUE
+  keep_models = FALSE
 )
 
 \method{twdtw_knn}{array}(
@@ -56,7 +56,7 @@ twdtw_knn(x, y, time_weight, cycle_length, time_scale, ..., time = NULL)
   max_elapsed = Inf,
   time = NULL,
   ...,
-  keep_models = TRUE
+  keep_models = FALSE
 )
 }
 \arguments{
@@ -98,16 +98,16 @@ from which the elapsed time is computed. Must be of the same class as x.}
 \item{index_column}{The column name or the column position of the time index of the time series in a list.
 Defaults to "time".}
 
-\item{keep_models}{If \code{TRUE} (default), the model keeps the models returned by
-\code{resampling_fun}. If \code{FALSE}, it keeps only their root mean squared error, which makes the
-model much smaller. See details.}
+\item{keep_models}{Whether the model keeps the fitted models that \code{resampling_fun} returns for
+each label and band, e.g. the \code{gam} objects. If \code{FALSE} (default), it keeps only their root
+mean squared error. The temporal patterns and the predictions do not depend on it. See details.}
 }
 \value{
 An object of class \code{twdtw_knn}, which is a list with:
 \item{call}{The call of the function.}
-\item{smooth_models}{The models returned by \code{resampling_fun}: a list with one element for each
-label, which is a list with the model of each band. \code{NULL} if the model keeps all time series
-or if \code{keep_models} is \code{FALSE}.}
+\item{smooth_models}{The models returned by \code{resampling_fun}, if \code{keep_models} is
+\code{TRUE}: a list with one element for each label, which is a list with the model of each band.
+Otherwise \code{NULL}.}
 \item{rmse}{The root mean squared error of the models returned by \code{resampling_fun}: a matrix with
 one row for each band and one column for each label, or \code{NULL} if the model keeps all time series.}
 \item{data}{A data.frame with one row for each temporal pattern and the columns \code{label} and
@@ -165,11 +165,14 @@ Most of the time to create the temporal patterns is used to fit these models. Wi
 time series, \code{function(data) mgcv::bam(y ~ s(x), data = data, discrete = TRUE)} gives nearly
 the same patterns as \code{mgcv::gam} and is about two times faster.
 
-The model keeps the models returned by \code{resampling_fun} in \code{smooth_models}. A fitted model
-usually contains the data it was fitted to, i.e. the observations of all time series of a label.
-With \code{keep_models = FALSE} the model keeps only the root mean squared error of each of them,
-which \code{print} shows. This makes the model much smaller, e.g. to save it to a file or to send it
-to other processes. The temporal patterns and the predictions are the same.
+The models that \code{resampling_fun} returns, one for each label and band, are only used to create
+the temporal patterns: \code{predict} uses the patterns and not these models. By default the model
+keeps the patterns and the root mean squared error of each fitted model, which \code{print} shows,
+and not the fitted models. A fitted model usually contains the data it was fitted to, i.e. the
+observations of all time series of a label. Without the fitted models the model is much smaller,
+e.g. to save it to a file or to send it to other processes. With \code{keep_models = TRUE} the fitted
+models are kept in \code{smooth_models}, e.g. to plot them or to see their summary:
+\code{summary(m$smooth_models[[label]][[band]])}.
 
 The temporal patterns of different labels can have a different number of observations, e.g. if the
 time series of the labels are from different years and their dates are one day apart after the shift.

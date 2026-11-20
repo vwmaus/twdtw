@@ -663,8 +663,8 @@
 # and the values 'y' of all time series with this label. The model that it
 # returns gives the values of the temporal pattern. The root mean squared error
 # of each model is returned, and the models themselves only if 'keep_models' is
-# TRUE: a fitted model usually contains its data
-.resample_patterns <- function(ts, labels, resampling_fun, resampling_freq, keep_models = TRUE) {
+# TRUE, because a fitted model usually contains its data
+.resample_patterns <- function(ts, labels, resampling_fun, resampling_freq, keep_models = FALSE) {
 
   bands <- setdiff(names(ts[[1]]), "time")
 

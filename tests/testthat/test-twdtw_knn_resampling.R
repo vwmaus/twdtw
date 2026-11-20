@@ -6,7 +6,7 @@ shifted_time <- knn_time - as.numeric(knn_time[1] - as.Date("1970-09-14"))
 
 test_that("the resampling function creates one temporal pattern for each label", {
   m <- knn_model(knn_samples, knn_sample_labels,
-                 resampling_fun = function(data) lm(y ~ factor(x), data = data))
+                 resampling_fun = function(data) lm(y ~ factor(x), data = data), keep_models = TRUE)
 
   # One pattern for each label, in the order in which the labels first appear
   labels <- unique(knn_sample_labels)
@@ -45,13 +45,20 @@ test_that("the resampling function creates one temporal pattern for each label",
   expect_equal(m_wide$data, m$data)
 })
 
-test_that("keep_models = FALSE keeps the root mean squared error of the models and not the models", {
+test_that("the model keeps the root mean squared error of the fitted models, and the models only with keep_models = TRUE", {
   mean_by_date <- function(data) lm(y ~ factor(x), data = data)
-  m <- knn_model(knn_samples, knn_sample_labels, resampling_fun = mean_by_date)
-  m_small <- knn_model(knn_samples, knn_sample_labels, resampling_fun = mean_by_date, keep_models = FALSE)
+  m <- knn_model(knn_samples, knn_sample_labels, resampling_fun = mean_by_date, keep_models = TRUE)
+  m_small <- knn_model(knn_samples, knn_sample_labels, resampling_fun = mean_by_date)
 
+  # The default is keep_models = FALSE, for the three forms of x
+  for (class in c("list", "data.frame", "array")) {
+    expect_identical(formals(getS3method("twdtw_knn", class))$keep_models, FALSE)
+  }
+  m_false <- knn_model(knn_samples, knn_sample_labels, resampling_fun = mean_by_date, keep_models = FALSE)
+  expect_identical(m_small[names(m_small) != "call"], m_false[names(m_false) != "call"])
   expect_named(m_small, names(m))
   expect_null(m_small$smooth_models)
+  expect_named(m$smooth_models, m$data$label)
   expect_identical(m_small$rmse, m$rmse)
   expect_identical(m_small$data, m$data)
   expect_lt(as.numeric(object.size(m_small)), as.numeric(object.size(m)) / 10)
@@ -75,15 +82,23 @@ test_that("keep_models = FALSE keeps the root mean squared error of the models a
   # The other two forms of x
   m_array <- knn_model(knn_array(knn_samples), knn_sample_labels, time = knn_time,
                        resampling_fun = mean_by_date, keep_models = FALSE)
-  m_wide <- knn_model(knn_wide(knn_samples), knn_sample_labels, resampling_fun = mean_by_date, keep_models = FALSE)
+  m_wide <- knn_model(knn_wide(knn_samples), knn_sample_labels, resampling_fun = mean_by_date)
   for (model in list(m_array, m_wide)) {
     expect_null(model$smooth_models)
     expect_equal(model$rmse, m$rmse)
     expect_equal(model$data, m$data)
   }
+  m_array <- knn_model(knn_array(knn_samples), knn_sample_labels, time = knn_time,
+                       resampling_fun = mean_by_date, keep_models = TRUE)
+  m_wide <- knn_model(knn_wide(knn_samples), knn_sample_labels, resampling_fun = mean_by_date, keep_models = TRUE)
+  for (model in list(m_array, m_wide)) {
+    expect_named(model$smooth_models, m$data$label)
+    expect_s3_class(model$smooth_models[[1]]$EVI, "lm")
+  }
 
   # A model that keeps all time series has no models to keep
-  m_all <- knn_model(knn_samples, knn_sample_labels, keep_models = FALSE)
+  m_all <- knn_model(knn_samples, knn_sample_labels, keep_models = TRUE)
+  expect_null(m_all$smooth_models)
   expect_null(m_all$rmse)
   expect_identical(m_all$data, knn_model(knn_samples, knn_sample_labels)$data)
 
@@ -106,7 +121,7 @@ test_that("the resampling function receives the time index and the values of all
     lm(y ~ poly(x, 3), data = data)
   }
 
-  m <- knn_model(samples, labels, resampling_fun = resampling_fun)
+  m <- knn_model(samples, labels, resampling_fun = resampling_fun, keep_models = TRUE)
 
   # One call for each label and band, with the samples of the label one after the other
   expect_length(received, 2 * length(knn_bands))
@@ -124,7 +139,7 @@ test_that("the resampling function receives the time index and the values of all
 test_that("resampling_freq sets the time between the observations of the patterns", {
   smooth <- function(data) loess(y ~ x, data = data, span = 0.5)
 
-  m <- knn_model(knn_samples, knn_sample_labels, resampling_fun = smooth, resampling_freq = 8)
+  m <- knn_model(knn_samples, knn_sample_labels, resampling_fun = smooth, resampling_freq = 8, keep_models = TRUE)
   pattern_time <- seq(min(shifted_time), max(shifted_time), by = 8)
   for (pattern in m$data$observations) {
     expect_equal(pattern$time, pattern_time)

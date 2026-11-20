@@ -1,8 +1,10 @@
-# version 1.1-0, November 15, 2026
+# version 1.1-0, November 20, 2026
 
 * Faster classification of time series. Version 1.1-0 is 20 to 140 times faster than version 1.0-1 on classification tasks with the new model `twdtw_knn()`. Assigning 10,000 time series (23 observations, 6 bands) to the nearest of 5 temporal patterns took 13 seconds in version 1.0-1. In version 1.1-0, it took 0.17 seconds starting from the same data frames, and 0.09 seconds for time series that are already in an array.
 
 * New function `twdtw_knn()`. It creates a k-nearest neighbour model from labelled time series, and `predict()` classifies time series with the labels of their nearest temporal patterns. The time series can be a list of data frames or matrices, a data frame with one column for each band and date, or an array. The model keeps all labelled time series as temporal patterns, or creates one pattern for each label with a resampling function.
+
+* A model with one pattern for each label keeps the patterns and the root mean squared error of the models fitted by the resampling function, which `print()` shows. The fitted models, e.g. the `gam` objects, contain the time series they were fitted to and are not kept by default; `keep_models = TRUE` keeps them in the model.
 
 * `predict()` uses the `k` nearest temporal patterns of each time series, by default only the nearest. `vote` sets how their votes are counted: one vote for each pattern (`"majority"`, the default) or votes with the weight 1/distance (`"weighted"`). `type` sets the result: the label with the most votes (`"class"`, the default), the share of the votes of each label (`"prob"`), or the labels and the distances of the nearest patterns (`"neighbors"`).
 

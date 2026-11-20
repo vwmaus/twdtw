@@ -18,9 +18,9 @@
 #' @param resampling_freq The time between the observations of the temporal patterns created with
 #' \code{resampling_fun}, e.g. \code{16} for 16 days if the time indices are dates. If \code{NULL} (default),
 #' the temporal patterns have the time indices of the observations of the time series.
-#' @param keep_models If \code{TRUE} (default), the model keeps the models returned by
-#' \code{resampling_fun}. If \code{FALSE}, it keeps only their root mean squared error, which makes the
-#' model much smaller. See details.
+#' @param keep_models Whether the model keeps the fitted models that \code{resampling_fun} returns for
+#' each label and band, e.g. the \code{gam} objects. If \code{FALSE} (default), it keeps only their root
+#' mean squared error. The temporal patterns and the predictions do not depend on it. See details.
 #' @param start,end The time interval in which the label of each time series is valid. Either one value
 #' for all time series or a vector with one value for each time series, of the same class as the time indices.
 #' Only the observations from \code{start} to \code{end}, including both, are used.
@@ -75,11 +75,14 @@
 #' time series, \code{function(data) mgcv::bam(y ~ s(x), data = data, discrete = TRUE)} gives nearly
 #' the same patterns as \code{mgcv::gam} and is about two times faster.
 #'
-#' The model keeps the models returned by \code{resampling_fun} in \code{smooth_models}. A fitted model
-#' usually contains the data it was fitted to, i.e. the observations of all time series of a label.
-#' With \code{keep_models = FALSE} the model keeps only the root mean squared error of each of them,
-#' which \code{print} shows. This makes the model much smaller, e.g. to save it to a file or to send it
-#' to other processes. The temporal patterns and the predictions are the same.
+#' The models that \code{resampling_fun} returns, one for each label and band, are only used to create
+#' the temporal patterns: \code{predict} uses the patterns and not these models. By default the model
+#' keeps the patterns and the root mean squared error of each fitted model, which \code{print} shows,
+#' and not the fitted models. A fitted model usually contains the data it was fitted to, i.e. the
+#' observations of all time series of a label. Without the fitted models the model is much smaller,
+#' e.g. to save it to a file or to send it to other processes. With \code{keep_models = TRUE} the fitted
+#' models are kept in \code{smooth_models}, e.g. to plot them or to see their summary:
+#' \code{summary(m$smooth_models[[label]][[band]])}.
 #'
 #' The temporal patterns of different labels can have a different number of observations, e.g. if the
 #' time series of the labels are from different years and their dates are one day apart after the shift.
@@ -96,9 +99,9 @@
 #'
 #' @return An object of class \code{twdtw_knn}, which is a list with:
 #' \item{call}{The call of the function.}
-#' \item{smooth_models}{The models returned by \code{resampling_fun}: a list with one element for each
-#' label, which is a list with the model of each band. \code{NULL} if the model keeps all time series
-#' or if \code{keep_models} is \code{FALSE}.}
+#' \item{smooth_models}{The models returned by \code{resampling_fun}, if \code{keep_models} is
+#' \code{TRUE}: a list with one element for each label, which is a list with the model of each band.
+#' Otherwise \code{NULL}.}
 #' \item{rmse}{The root mean squared error of the models returned by \code{resampling_fun}: a matrix with
 #' one row for each band and one column for each label, or \code{NULL} if the model keeps all time series.}
 #' \item{data}{A data.frame with one row for each temporal pattern and the columns \code{label} and
@@ -180,7 +183,7 @@ twdtw_knn.list <- function(x, y,
                            origin = NULL,
                            max_elapsed = Inf,
                            index_column = 'time', ...,
-                           keep_models = TRUE) {
+                           keep_models = FALSE) {
 
   .check_unknown_args(list(...), "twdtw_knn", "x")
 
@@ -218,7 +221,7 @@ twdtw_knn.data.frame <- function(x, y,
                                  end = NULL,
                                  origin = NULL,
                                  max_elapsed = Inf, ...,
-                                 keep_models = TRUE) {
+                                 keep_models = FALSE) {
 
   .check_unknown_args(list(...), "twdtw_knn", "x")
 
@@ -259,7 +262,7 @@ twdtw_knn.array <- function(x, y,
                             origin = NULL,
                             max_elapsed = Inf,
                             time = NULL, ...,
-                            keep_models = TRUE) {
+                            keep_models = FALSE) {
 
   .check_unknown_args(list(...), "twdtw_knn", "x")
 
