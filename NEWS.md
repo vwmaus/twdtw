@@ -1,3 +1,7 @@
+# version 1.1-1, November 24, 2026
+
+* Fixes four tests that failed in CRAN's check with the Intel MKL linear algebra library. The tests fitted the same model twice and expected identical numbers, but with MKL two fits of the same data can differ in the last digit. The tests now compare these numbers with a tolerance. The functions of the package did not change.
+
 # version 1.1-0, November 20, 2026
 
 * Faster classification of time series. Version 1.1-0 is 20 to 140 times faster than version 1.0-1 on classification tasks with the new model `twdtw_knn()`. Assigning 10,000 time series (23 observations, 6 bands) to the nearest of 5 temporal patterns took 13 seconds in version 1.0-1. In version 1.1-0, it took 0.17 seconds starting from the same data frames, and 0.09 seconds for time series that are already in an array.

@@ -1,3 +1,46 @@
+# twdtw-1.1-1
+
+This version fixes the additional issue 'MKL' reported for version 1.1-0
+(<https://www.stats.ox.ac.uk/pub/bdr/Rblas/MKL/twdtw.out>). Only one test file
+changed. The 'R', 'Fortran' and 'C++' code of the package is the same as in
+version 1.1-0.
+
+## Changes
+
+* Four expectations in `tests/testthat/test-twdtw_knn_resampling.R` fitted the
+  same model twice with `lm()` and compared the results of the two fits with
+  `expect_identical()`. With Intel MKL the two fits differed in the last digit
+  (a relative difference of about 1e-16), and the four expectations failed.
+  They now use `expect_equal()`.
+
+* We could not reproduce the differences with Intel MKL: the tests of version
+  1.1-0 pass in the R-hub container 'mkl' (R-devel, Intel MKL 2025.3). We
+  therefore changed the last digit of the fitted models in a test run. The
+  tests of version 1.1-0 then fail in the same four lines as in the CRAN
+  check, and the tests of this version pass.
+
+## Test environments
+
+* Local Ubuntu 24.04.5 LTS, R 4.6.2, GCC and GNU Fortran 13.3.0
+* R-hub container 'mkl', Fedora Linux 44, R-devel (2026-11-23 r90971), Intel MKL 2025.3
+
+## R CMD check results
+
+There were no ERRORs or WARNINGs. The local check with `--as-cran` returned
+two NOTEs:
+
+* 'Days since last update: 4'. This update follows version 1.1-0 after a few
+  days to fix the additional issue above.
+
+* The compiler flag `-mno-omit-leaf-frame-pointer`, which is set in the R
+  configuration of the system and not by the package.
+
+## Reverse dependencies
+
+There is one reverse dependency on CRAN, 'rasterdiv' 0.3.8. The code that
+'rasterdiv' calls did not change since version 1.1-0.
+
+
 # twdtw-1.1-0
 
 This version adds new features, fixes two memory errors, and is 20 to 140 times
