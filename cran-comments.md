@@ -13,27 +13,25 @@ version 1.1-0.
   (a relative difference of about 1e-16), and the four expectations failed.
   They now use `expect_equal()`.
 
-* We could not reproduce the differences with Intel MKL: the tests of version
-  1.1-0 pass in the R-hub container 'mkl' (R-devel, Intel MKL 2025.3). We
-  therefore changed the last digit of the fitted models in a test run. The
-  tests of version 1.1-0 then fail in the same four lines as in the CRAN
-  check, and the tests of this version pass.
+* We reproduced the issue with Intel MKL 2026.2.0 on an Intel Xeon Gold 6154
+  (R 4.4.2, Ubuntu 24.04.1 LTS, MKL as BLAS and LAPACK). The tests of version
+  1.1-0 fail there in the same four lines as in the CRAN check, in three of
+  three runs. With this version, `R CMD check` returns Status: OK there.
+  The tests of version 1.1-0 pass with Intel MKL on an AMD processor, also in
+  the R-hub container 'mkl'.
 
 ## Test environments
 
 * Local Ubuntu 24.04.5 LTS, R 4.6.2, GCC and GNU Fortran 13.3.0
+* Ubuntu 24.04.1 LTS, R 4.4.2, Intel MKL 2026.2.0 as BLAS and LAPACK, Intel Xeon Gold 6154
 * R-hub container 'mkl', Fedora Linux 44, R-devel (2026-11-23 r90971), Intel MKL 2025.3
+* GitHub Actions, Ubuntu R-devel, R-release and R-oldrel, macOS (arm64) R-release, Windows R-release
 
 ## R CMD check results
 
 There were no ERRORs or WARNINGs. The local check with `--as-cran` returned
-two NOTEs:
-
-* 'Days since last update: 4'. This update follows version 1.1-0 after a few
-  days to fix the additional issue above.
-
-* The compiler flag `-mno-omit-leaf-frame-pointer`, which is set in the R
-  configuration of the system and not by the package.
+one NOTE: the compiler flag `-mno-omit-leaf-frame-pointer`, which is set in the
+R configuration of the system and not by the package.
 
 ## Reverse dependencies
 
