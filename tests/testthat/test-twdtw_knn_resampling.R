@@ -55,17 +55,20 @@ test_that("the model keeps the root mean squared error of the fitted models, and
     expect_identical(formals(getS3method("twdtw_knn", class))$keep_models, FALSE)
   }
   m_false <- knn_model(knn_samples, knn_sample_labels, resampling_fun = mean_by_date, keep_models = FALSE)
-  expect_identical(m_small[names(m_small) != "call"], m_false[names(m_false) != "call"])
+
+  # Each model fits 'mean_by_date' again. Two fits of the same data can differ in the last digit, depending
+  # on the linear algebra library (e.g. Intel MKL), so the numbers are compared with a tolerance
+  expect_equal(m_small[names(m_small) != "call"], m_false[names(m_false) != "call"])
   expect_named(m_small, names(m))
   expect_null(m_small$smooth_models)
   expect_named(m$smooth_models, m$data$label)
-  expect_identical(m_small$rmse, m$rmse)
-  expect_identical(m_small$data, m$data)
+  expect_equal(m_small$rmse, m$rmse)
+  expect_equal(m_small$data, m$data)
   expect_lt(as.numeric(object.size(m_small)), as.numeric(object.size(m)) / 10)
 
   # The same predictions, and the same summary after the call
   new_series <- knn_series[knn_new_ids]
-  expect_identical(predict(m_small, newdata = new_series), predict(m, newdata = new_series))
+  expect_equal(predict(m_small, newdata = new_series), predict(m, newdata = new_series))
   printed_data <- function(model) {
     out <- capture.output(print(model))
     out[seq(which(out == "Data:"), length(out))]
