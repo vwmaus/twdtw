@@ -45,6 +45,13 @@
 #' Patterns with the same distance to a time series are returned in the order of their position in \code{y}.
 #' A pattern that cannot be matched to a time series within \code{max_elapsed} has the distance \code{Inf}.
 #'
+#' With the logistic time weight, the distance is not calculated for all pairs of time series and pattern.
+#' A pattern is skipped if a lower bound of its distance to a time series is greater than the distance
+#' to the current \code{k}-th nearest pattern, and the calculation for a pattern stops as soon as the pattern
+#' cannot be among the \code{k} nearest. The nearest patterns of the previous time series are calculated first,
+#' therefore time series that are similar to the time series before them, e.g. neighbouring pixels of an image,
+#' are processed faster. The result is the same as with the distance of all pairs.
+#'
 #' If \code{time_weight} is a function, it is called once for each temporal pattern and block of time series
 #' and not for each pair of observations. The function receives two numeric vectors of the same length,
 #' the Euclidean distance and the elapsed time of the pairs of observations, and must return a numeric vector

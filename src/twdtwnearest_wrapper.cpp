@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include <algorithm>
+#include <climits>
 #include <cmath>
 #include <vector>
 using namespace Rcpp;
@@ -10,8 +11,11 @@ extern "C" {
   void twdtwnearest_weights(double* TX, int* NT, double* TY, int* NY, double* TW,
                             double* LB, double* CL, double* W);
 
+  void twdtwnearest_near(double* WL, int* NT, int* NY, int* NM, int* NO, int* NEAR, double* FW);
+
   void twdtwnearest(double* XM, int* NS, int* NT, int* ND, int* P1, int* P2,
                     double* YM, int* YO, int* NY, int* NP, double* WL,
+                    int* USELB, int* NO, int* NEAR, double* FW,
                     int* K, int* KI, double* KD, int* IERR);
 
   void twdtwnearest_dist(double* XM, int* NS, int* NT, int* ND, int* P1, int* P2,
@@ -79,6 +83,25 @@ List twdtw_nearest_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
   std::vector<double> WL(static_cast<std::size_t>(NT) * NY);
   twdtwnearest_weights(TX.begin(), &NT, TY.begin(), &NY, TW.begin(), &LB, &CL, WL.data());
 
+  // Dates of the time series near each observation of the patterns, i.e. with
+  // a low time weight. They give a lower bound of the distance of a pattern,
+  // which is used to skip patterns that cannot be among the nearest. The bound
+  // is only used if it is much cheaper than the distance, i.e. if less than
+  // half of the dates are near, and if not all patterns are neighbours
+  std::vector<int> NO(static_cast<std::size_t>(NY) + 1), NEAR(1);
+  std::vector<double> FW(NY);
+  int NM = 0, USELB = 0;
+  if (K < NP && static_cast<double>(NT) * NY < static_cast<double>(INT_MAX)) {
+    // Count the near dates, then list them
+    twdtwnearest_near(WL.data(), &NT, &NY, &NM, NO.data(), NEAR.data(), FW.data());
+    if (NO[NY] > 0 && static_cast<double>(NO[NY]) <= 0.5 * NT * NY) {
+      USELB = 1;
+      NM = NO[NY];
+      NEAR.resize(NM);
+      twdtwnearest_near(WL.data(), &NT, &NY, &NM, NO.data(), NEAR.data(), FW.data());
+    }
+  }
+
   // Time series without observations are not modified by the Fortran code
   IntegerMatrix KI(NS, K);
   NumericMatrix KD(NS, K);
@@ -95,7 +118,7 @@ List twdtw_nearest_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
     int P1 = static_cast<int>(first);
     int P2 = static_cast<int>(std::min<R_xlen_t>(NS, first + block - 1));
     twdtwnearest(XM.begin(), &NS, &NT, &ND, &P1, &P2, YM.begin(), YO.begin(), &NY, &NP,
-                 WL.data(), &K, KI.begin(), KD.begin(), &IERR);
+                 WL.data(), &USELB, NO.data(), NEAR.data(), FW.data(), &K, KI.begin(), KD.begin(), &IERR);
     if (IERR != 0) {
       stop("Could not allocate memory to compute TWDTW");
     }
