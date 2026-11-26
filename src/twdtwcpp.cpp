@@ -33,16 +33,23 @@ void twdtw_cpp(const NumericMatrix& XM, const NumericMatrix& YM, NumericMatrix& 
   VM(0, 0) = 1; // R index
 
   // Initialize the first row and column of the matrices
+  // The first column is constrained by the maximum elapsed time like the other columns
   for (int I = 1; I <= N; ++I) {
     double TD = std::fabs(YM(I-1, 0) - XM(0, 0));
     TD = std::min(TD, CL - TD);
-    double DIST = 0.0;
-    for (int K = 1; K < D; ++K) {
-      DIST += std::pow(YM(I-1, K) - XM(0, K), 2);
+    if (TD > LB) {
+      CM(I, 0) = INF;
+      DM(I, 0) = -ONE;
+      VM(I, 0) = ZERO;
+    } else {
+      double DIST = 0.0;
+      for (int K = 1; K < D; ++K) {
+        DIST += std::pow(YM(I-1, K) - XM(0, K), 2);
+      }
+      CM(I, 0) = CM(I-1, 0) + sqrt(DIST) + 1.0 / (1.0 + std::exp(-TW[0] * (TD - TW[1])));
+      DM(I, 0) = 3;
+      VM(I, 0) = VM(I-1, 0);
     }
-    CM(I, 0) = CM(I-1, 0) + sqrt(DIST) + 1.0 / (1.0 + std::exp(-TW[0] * (TD - TW[1])));
-    DM(I, 0) = 3;
-    VM(I, 0) = 1;
   }
 
   // Compute cumulative cost matrix

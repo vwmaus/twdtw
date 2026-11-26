@@ -75,7 +75,19 @@ test_that("multiple functions return the same value", {
 
   )
 
-  for (i in 2:length(results)) {
+  # The versions return the same matches, without and with a maximum elapsed time
+  for (i in 2:3) {
     expect_equal(results[[1]], results[[i]], tolerance = 1e-5)
   }
+
+  for (i in 5:6) {
+    expect_equal(results[[4]], results[[i]], tolerance = 1e-5)
+  }
+
+  # Without a maximum elapsed time there is a match of all observations of the pattern to
+  # the first observation of the time series. The maximum elapsed time excludes this match
+  # and does not change the other matches
+  all_to_first <- results[[1]][, 1] == 1 & results[[1]][, 2] == 1
+  expect_equal(sum(all_to_first), 1)
+  expect_equal(unclass(results[[4]]), unclass(results[[1]])[!all_to_first, , drop = FALSE], tolerance = 1e-5)
 })

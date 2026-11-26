@@ -66,16 +66,25 @@ subroutine twdtwf90(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL, callback_func) 
   VM(1,1) = 1
 
   ! Initialize the first row and col of the matrices
+  ! The first column has only the cost from the previous row. It is constrained
+  ! by the maximum elapsed time like the other columns: after an observation
+  ! that is too far in time, the remaining cells of the column cannot be reached
   do I = 2, N+1
     TD = abs(YM(I-1,1) - XM(1,1))
     TD = min(TD, CL - TD)
-    DIST = 0.0
-    do K = 2, D
-      DIST = DIST + (YM(I-1,K) - XM(1,K))**2
-    end do
-    CM(I,1) = CM(I-1,1) + callback_func(sqrt(DIST), TD, TW(1), TW(2))
-    DM(I,1) = 3
-    VM(I,1) = 1
+    if (TD.gt.LB) then
+      CM(I,1) = INF
+      DM(I,1) = -ONE
+      VM(I,1) = ZERO
+    else
+      DIST = 0.0
+      do K = 2, D
+        DIST = DIST + (YM(I-1,K) - XM(1,K))**2
+      end do
+      CM(I,1) = CM(I-1,1) + callback_func(sqrt(DIST), TD, TW(1), TW(2))
+      DM(I,1) = 3
+      VM(I,1) = VM(I-1,1)
+    end if
   end do
 
   ! Compute cumulative cost matrix
@@ -171,16 +180,23 @@ subroutine twdtwf90gt(XM, YM, CM, DM, VM, N, M, D, TW, LB, JB, CL)
   VM(1,1) = 1
 
   ! Initialize the first row and column of the matrices
+  ! The first column is constrained by the maximum elapsed time like the other columns
   do 21 I = 2, N+1
      TD = abs(YM(I-1,1) - XM(1,1))
      TD = min(TD, CL - TD)
+     if (TD.gt.LB) then
+        CM(I,1) =  INF
+        DM(I,1) = -ONE
+        VM(I,1) = ZERO
+        goto 21
+     endif
      DIST = 0.0
      do K = 2, D
        DIST = DIST + (YM(I-1,K) - XM(1,K))**2
      end do
      CM(I,1) = CM(I-1,1) + sqrt(DIST) + 1.0 / (1.0 + exp(-TW(1) * (TD - TW(2))))
      DM(I,1) = 3
-     VM(I,1) = 1
+     VM(I,1) = VM(I-1,1)
 21 continue
 
   ! Compute cumulative cost matrix

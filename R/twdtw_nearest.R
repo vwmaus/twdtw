@@ -43,6 +43,7 @@
 #' have at least one complete observation.
 #'
 #' Patterns with the same distance to a time series are returned in the order of their position in \code{y}.
+#' A pattern that cannot be matched to a time series within \code{max_elapsed} has the distance \code{Inf}.
 #'
 #' If \code{time_weight} is a function, it is called once for each temporal pattern and block of time series
 #' and not for each pair of observations. The function receives two numeric vectors of the same length,

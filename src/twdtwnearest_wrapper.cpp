@@ -11,7 +11,7 @@ extern "C" {
                             double* LB, double* CL, double* W);
 
   void twdtwnearest(double* XM, int* NS, int* NT, int* ND, int* P1, int* P2,
-                    double* YM, int* YO, int* NY, int* NP, double* WU, double* WL,
+                    double* YM, int* YO, int* NY, int* NP, double* WL,
                     int* K, int* KI, double* KD, int* IERR);
 
   void twdtwnearest_dist(double* XM, int* NS, int* NT, int* ND, int* P1, int* P2,
@@ -74,19 +74,10 @@ List twdtw_nearest_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
     stop("K must be between one and the number of temporal patterns");
   }
 
-  // Time weights are the same for all time series. The weights constrained by
-  // the maximum elapsed time are only needed if the constraint is active
-  double INF = R_PosInf;
-  std::vector<double> WU(static_cast<std::size_t>(NT) * NY);
-  twdtwnearest_weights(TX.begin(), &NT, TY.begin(), &NY, TW.begin(), &INF, &CL, WU.data());
-
-  std::vector<double> WC;
-  double* WL = WU.data();
-  if (LB != R_PosInf) {
-    WC.resize(WU.size());
-    twdtwnearest_weights(TX.begin(), &NT, TY.begin(), &NY, TW.begin(), &LB, &CL, WC.data());
-    WL = WC.data();
-  }
+  // Time weights are the same for all time series. Pairs of observations with
+  // an elapsed time greater than the maximum elapsed time have an infinite weight
+  std::vector<double> WL(static_cast<std::size_t>(NT) * NY);
+  twdtwnearest_weights(TX.begin(), &NT, TY.begin(), &NY, TW.begin(), &LB, &CL, WL.data());
 
   // Time series without observations are not modified by the Fortran code
   IntegerMatrix KI(NS, K);
@@ -104,7 +95,7 @@ List twdtw_nearest_f90(NumericVector XM, IntegerVector XD, NumericVector TX,
     int P1 = static_cast<int>(first);
     int P2 = static_cast<int>(std::min<R_xlen_t>(NS, first + block - 1));
     twdtwnearest(XM.begin(), &NS, &NT, &ND, &P1, &P2, YM.begin(), YO.begin(), &NY, &NP,
-                 WU.data(), WL, &K, KI.begin(), KD.begin(), &IERR);
+                 WL.data(), &K, KI.begin(), KD.begin(), &IERR);
     if (IERR != 0) {
       stop("Could not allocate memory to compute TWDTW");
     }

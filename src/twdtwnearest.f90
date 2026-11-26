@@ -68,13 +68,12 @@ end subroutine twdtwnearest_weights
 ! YO   - Row offset of each temporal pattern in YM (NP+1), pattern I is in rows YO(I)+1 to YO(I+1)
 ! NY   - Number of observations of all temporal patterns
 ! NP   - Number of temporal patterns
-! WU   - Time weights without maximum elapsed time constraint (NT,NY), see twdtwnearest_weights
 ! WL   - Time weights constrained by the maximum elapsed time (NT,NY), see twdtwnearest_weights
 ! K    - Number of nearest neighbours
 ! KI   - Output index of the K nearest patterns (NS,K), not modified for time series without observations
 ! KD   - Output distance to the K nearest patterns (NS,K), not modified for time series without observations
 ! IERR - Output error flag, zero if the work arrays were allocated
-subroutine twdtwnearest(XM, NS, NT, ND, P1, P2, YM, YO, NY, NP, WU, WL, K, KI, KD, IERR) bind(C, name="twdtwnearest")
+subroutine twdtwnearest(XM, NS, NT, ND, P1, P2, YM, YO, NY, NP, WL, K, KI, KD, IERR) bind(C, name="twdtwnearest")
   use, intrinsic :: ieee_arithmetic
   use, intrinsic :: iso_c_binding
   implicit none
@@ -82,7 +81,7 @@ subroutine twdtwnearest(XM, NS, NT, ND, P1, P2, YM, YO, NY, NP, WU, WL, K, KI, K
   ! I/O Variables
   integer(c_int), intent(in) :: NS, NT, ND, P1, P2, NY, NP, K
   integer(c_int), intent(in) :: YO(NP+1)
-  real(c_double), intent(in) :: XM(NS,NT,ND), YM(NY,ND), WU(NT,NY), WL(NT,NY)
+  real(c_double), intent(in) :: XM(NS,NT,ND), YM(NY,ND), WL(NT,NY)
   integer(c_int), intent(inout) :: KI(NS,K)
   real(c_double), intent(inout) :: KD(NS,K)
   integer(c_int), intent(out) :: IERR
@@ -154,10 +153,11 @@ subroutine twdtwnearest(XM, NS, NT, ND, P1, P2, YM, YO, NY, NP, WU, WL, K, KI, K
         end do
 
         ! Compute cumulative cost of the row, CR has the cost of the previous row
-        ! The first column has only the cost from the previous row and is not
-        ! constrained by the maximum elapsed time, consistent with twdtwf90
+        ! The first column has only the cost from the previous row. It is
+        ! constrained by the maximum elapsed time like the other columns,
+        ! consistent with twdtwf90
         DIAG = CR(1)
-        LEFT = DT(1) + WU(JX(1),I) + DIAG
+        LEFT = DT(1) + WL(JX(1),I) + DIAG
         CR(1) = LEFT
         CMIN = LEFT
         do J = 2, M
@@ -348,10 +348,15 @@ subroutine twdtwnearest_cost(CM, NB, NT, NI, OK, EL, LB, IP, K, NS, P1, KN, KI, 
     do I = 1, NI
 
       ! Compute cumulative cost of the row, CR has the cost of the previous row
-      ! The first column has only the cost from the previous row and is not
-      ! constrained by the maximum elapsed time, consistent with twdtwf90
+      ! The first column has only the cost from the previous row. It is
+      ! constrained by the maximum elapsed time like the other columns,
+      ! consistent with twdtwf90
       DIAG = CR(1)
-      LEFT = CM(P,JX(1),I) + DIAG
+      if (EL(JX(1),I).gt.LB) then
+        LEFT = INF
+      else
+        LEFT = CM(P,JX(1),I) + DIAG
+      end if
       CR(1) = LEFT
       CMIN = LEFT
       do J = 2, M

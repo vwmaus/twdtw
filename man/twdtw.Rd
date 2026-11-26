@@ -60,7 +60,9 @@ from which the elapsed time is computed. Must be of the same class as x.}
 \item{index_column}{(optional) The column name of the time index for data.frame inputs. Defaults to "time".
 For matrix input, an integer indicating the column with the time index. Defaults to 1.}
 
-\item{max_elapsed}{Numeric value constraining the TWDTW calculation to the lower band given by a maximum elapsed time. Defaults to Inf.}
+\item{max_elapsed}{Numeric value with the maximum elapsed time between an observation of \code{x} and an
+observation of \code{y} that can be matched, in the units of the time index, e.g. days for
+\code{time_scale = 'day'}. Defaults to Inf, i.e. no limit. See details.}
 
 \item{output}{A character string defining the output. It must be one of 'distance', 'matches', 'internals'. Defaults to 'distance'.
 'distance' will return the lowest TWDTW distance between \code{x} and \code{y}.
@@ -74,7 +76,8 @@ deprecated and will be removed in version 1.2-0. See details.}
 \value{
 An S3 object twdtw either:
 If output = 'distance', a numeric value representing the TWDTW distance between the two time series,
-or \code{NA} if every observation of one of them has a missing value.
+\code{NA} if every observation of one of them has a missing value, or \code{Inf} if they cannot be
+matched within \code{max_elapsed}.
 If output = 'matches', a numeric matrix of all TWDTW matches. For each match the starting index, ending index,
 and distance are returned. If output = 'internals', a list of all TWDTW internal data is returned.
 }
@@ -125,10 +128,12 @@ They give the same result as the default version '\code{f90}' for the logistic t
 and \code{twdtw} gives a warning once per session if one of them is used.
 
 You can use the \code{max_elapsed} parameter
-to limit the TWDTW calculation to a maximum elapsed time. This means it will skip
-comparisons between pairs of observations in \code{x} and \code{y} that are far apart in time.
+to limit the TWDTW calculation to a maximum elapsed time. This means that an observation of \code{x}
+and an observation of \code{y} can only be matched if the time elapsed between them is not greater
+than \code{max_elapsed}. The limit applies to all observations of \code{x}, including the first one.
 Be careful, though: if \code{max_elapsed} is set too low, it could change the results.
-It important to try out different settings for your specific problem.
+It is important to try out different settings for your specific problem.
+If \code{y} cannot be matched to \code{x} within \code{max_elapsed}, the distance is \code{Inf} and there are no matches.
 
 The time series can have missing values. An observation with a missing value in any dimension
 is removed from \code{x} and \code{y}, and the distance is calculated with the remaining observations.

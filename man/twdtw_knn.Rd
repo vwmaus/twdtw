@@ -93,7 +93,9 @@ If \code{NULL} (default), all observations are used.}
 \item{origin}{For numeric cycle_length, the origin must be specified. This is the point
 from which the elapsed time is computed. Must be of the same class as x.}
 
-\item{max_elapsed}{Numeric value constraining the TWDTW calculation to the lower band given by a maximum elapsed time. Defaults to Inf.}
+\item{max_elapsed}{Numeric value with the maximum elapsed time between an observation of \code{x} and an
+observation of \code{y} that can be matched, in the units of the time index, e.g. days for
+\code{time_scale = 'day'}. Defaults to Inf, i.e. no limit. See details.}
 
 \item{index_column}{The column name or the column position of the time index of the time series in a list.
 Defaults to "time".}

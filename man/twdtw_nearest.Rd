@@ -49,7 +49,9 @@ from which the elapsed time is computed. Must be of the same class as \code{time
 \item{index_column}{The column name or the column position of the time index in the patterns in \code{y}.
 Defaults to "time".}
 
-\item{max_elapsed}{Numeric value constraining the TWDTW calculation to the lower band given by a maximum elapsed time. Defaults to Inf.}
+\item{max_elapsed}{Numeric value with the maximum elapsed time between an observation of \code{x} and an
+observation of \code{y} that can be matched, in the units of the time index, e.g. days for
+\code{time_scale = 'day'}. Defaults to Inf, i.e. no limit. See details.}
 }
 \value{
 A list with two matrices with one row for each time series in \code{x} and \code{k} columns
@@ -85,6 +87,7 @@ A time series without any complete observation has \code{NA} for all neighbours.
 have at least one complete observation.
 
 Patterns with the same distance to a time series are returned in the order of their position in \code{y}.
+A pattern that cannot be matched to a time series within \code{max_elapsed} has the distance \code{Inf}.
 
 If \code{time_weight} is a function, it is called once for each temporal pattern and block of time series
 and not for each pair of observations. The function receives two numeric vectors of the same length,

@@ -18,7 +18,9 @@
 #' from which the elapsed time is computed. Must be of the same class as x.
 #' @param index_column (optional) The column name of the time index for data.frame inputs. Defaults to "time".
 #' For matrix input, an integer indicating the column with the time index. Defaults to 1.
-#' @param max_elapsed Numeric value constraining the TWDTW calculation to the lower band given by a maximum elapsed time. Defaults to Inf.
+#' @param max_elapsed Numeric value with the maximum elapsed time between an observation of \code{x} and an
+#' observation of \code{y} that can be matched, in the units of the time index, e.g. days for
+#' \code{time_scale = 'day'}. Defaults to Inf, i.e. no limit. See details.
 #' @param output A character string defining the output. It must be one of 'distance', 'matches', 'internals'. Defaults to 'distance'.
 #' 'distance' will return the lowest TWDTW distance between \code{x} and \code{y}.
 #' 'matches' will return all matches within the TWDTW matrix. 'internals' will return all TWDTW internal data.
@@ -72,10 +74,12 @@
 #' and \code{twdtw} gives a warning once per session if one of them is used.
 #'
 #' You can use the `max_elapsed` parameter
-#' to limit the TWDTW calculation to a maximum elapsed time. This means it will skip
-#' comparisons between pairs of observations in `x` and `y` that are far apart in time.
+#' to limit the TWDTW calculation to a maximum elapsed time. This means that an observation of `x`
+#' and an observation of `y` can only be matched if the time elapsed between them is not greater
+#' than `max_elapsed`. The limit applies to all observations of `x`, including the first one.
 #' Be careful, though: if `max_elapsed` is set too low, it could change the results.
-#' It important to try out different settings for your specific problem.
+#' It is important to try out different settings for your specific problem.
+#' If `y` cannot be matched to `x` within `max_elapsed`, the distance is \code{Inf} and there are no matches.
 #'
 #' The time series can have missing values. An observation with a missing value in any dimension
 #' is removed from \code{x} and \code{y}, and the distance is calculated with the remaining observations.
@@ -84,7 +88,8 @@
 #'
 #' @return An S3 object twdtw either:
 #' If output = 'distance', a numeric value representing the TWDTW distance between the two time series,
-#' or \code{NA} if every observation of one of them has a missing value.
+#' \code{NA} if every observation of one of them has a missing value, or \code{Inf} if they cannot be
+#' matched within \code{max_elapsed}.
 #' If output = 'matches', a numeric matrix of all TWDTW matches. For each match the starting index, ending index,
 #' and distance are returned. If output = 'internals', a list of all TWDTW internal data is returned.
 #'
@@ -324,7 +329,8 @@ twdtw.matrix <- function(x, y,
   b <- JB[JB!=0]
 
   if (output == 'distance'){
-    out <- min(CM[-1,,drop=FALSE][N,b])
+    # Without a match within the maximum elapsed time the distance is infinite
+    out <- if (length(b) > 0) min(CM[-1,,drop=FALSE][N,b]) else Inf
   } else {
     out <- matrix(c(VM[-1,,drop=FALSE][N,b], b, CM[-1,,drop=FALSE][N,b]), ncol = 3, byrow = F)
     if(output == 'internals'){

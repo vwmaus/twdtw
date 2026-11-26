@@ -1,3 +1,7 @@
+# version 1.2-0
+
+* Fixes `max_elapsed`, which did not apply to the first observation of the time series `x`. All observations of `y` could be matched to the first observation of `x`, whatever the time elapsed between them. Now an observation of `x` and an observation of `y` are only matched if the time elapsed between them is not greater than `max_elapsed`. Results of `twdtw()`, `twdtw_nearest()` and `predict()` change only for calls that set `max_elapsed`: `twdtw()` no longer returns the match of all observations of `y` to the first observation of `x`, and a distance changes if its alignment matched an observation of `y` to the first observation of `x` beyond the limit. In the example data of the package no distance to the nearest patterns changes. If `y` cannot be matched to `x` within `max_elapsed`, `twdtw()` returns the distance `Inf` and no matches.
+
 # version 1.1-1, November 24, 2026
 
 * Fixes four tests that failed in CRAN's check with the Intel MKL linear algebra library. The tests fitted the same model twice and expected identical numbers, but with MKL two fits of the same data can differ in the last digit. The tests now compare these numbers with a tolerance. The functions of the package did not change.
